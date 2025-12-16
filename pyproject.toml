@@ -1,0 +1,24 @@
+[project]
+name = "dewkit"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "celery>=5.6.0",
+    "django>=5.2.9",
+    "djangorestframework>=3.16.1",
+    "gunicorn>=23.0.0",
+    "httpx>=0.28.1",
+    "psycopg>=3.3.2",
+    "pytest>=9.0.2",
+    "python-dotenv>=1.2.1",
+    "redis>=7.1.0",
+    "tornado>=6.5.4",
+    "whitenoise>=6.11.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.12.0",
+]
