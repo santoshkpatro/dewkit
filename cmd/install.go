@@ -16,7 +16,7 @@ var installCmd = &cobra.Command{
 	Short: "Install dewkit",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Installing dewkit...")
-		ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		db, _ := config.GetDB(ctx)
@@ -33,7 +33,7 @@ func init() {
 var initialSettings = map[string]any{
 	"app.baseUrl":        "https://dewkit.app",
 	"app.supportEmail":   "support@dewkit.app",
-	"db.version":         1,
+	"db.version":         0,
 	"system.maintenance": false,
 }
 
@@ -46,9 +46,11 @@ func install(ctx context.Context, db *pgx.Conn) error {
 			WHERE table_name = 'settings'
 		)
 	`).Scan(&exists)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
-	if exists { 
+	if exists {
 		fmt.Println("Skipping installation! Settings has been initiated already")
 		return nil
 	}
@@ -60,12 +62,16 @@ func install(ctx context.Context, db *pgx.Conn) error {
 			value JSONB NOT NULL
 		);
 	`)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	fmt.Println("Creating settings table")
 
 	// 3. Seeding with some initial set of data
 	tx, err := db.Begin(ctx)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	defer tx.Rollback(ctx)
 
@@ -79,7 +85,9 @@ func install(ctx context.Context, db *pgx.Conn) error {
 			VALUES ($1, $2)
 			ON CONFLICT (key) DO NOTHING
 		`, key, data)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 
 		fmt.Printf("Inserted setting: %s\n", key)
 	}
