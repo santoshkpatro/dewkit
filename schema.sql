@@ -39,7 +39,9 @@ CREATE TABLE users (
     is_active boolean DEFAULT true NOT NULL,
     is_password_expired boolean DEFAULT false NOT NULL,
     last_login_at timestamp with time zone,
-    role text DEFAULT 'staff'::text NOT NULL
+    role text DEFAULT 'staff'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE SEQUENCE users_id_seq
@@ -77,7 +79,7 @@ ALTER TABLE ONLY conversations
 
 -- Ensure db.version is set to latest migration
 INSERT INTO settings (key, value)
-VALUES ('db.version', to_jsonb(3::int))
+VALUES ('db.version', to_jsonb(4::int))
 ON CONFLICT (key)
 DO UPDATE SET value = EXCLUDED.value;
 	

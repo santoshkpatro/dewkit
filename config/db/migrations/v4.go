@@ -13,8 +13,8 @@ var V4 = Migration{
 			ctx,
 			`
 			ALTER TABLE users
-				created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-				updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+				ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+				ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 			`,
 		)
 		return err
