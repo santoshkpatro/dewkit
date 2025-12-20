@@ -68,3 +68,5 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+docs/.vitepress/cache
