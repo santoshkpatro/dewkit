@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -34,6 +35,8 @@ func SetupDB(ctx context.Context) error {
 	if err := pool.Ping(ctx); err != nil {
 		return err
 	}
+
+	fmt.Println("DB Connected ...")
 
 	DB = pool
 	return nil

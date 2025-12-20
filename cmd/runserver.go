@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"context"
+	"dewkit/config"
 	"dewkit/internal/handlers"
 	"fmt"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
@@ -22,6 +25,10 @@ func init() {
 
 func runserver() {
 	fmt.Println("Staring dewkit server ...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	config.SetupDB(ctx)
 
 	e := echo.New()
 	api := e.Group("/api")
