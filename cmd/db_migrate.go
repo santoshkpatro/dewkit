@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var syncSchema bool
+
 func getCurrentDBVersion(ctx context.Context, db *pgx.Conn) (int, error) {
 	var version int
 
@@ -56,7 +58,7 @@ var dbMigrateCmd = &cobra.Command{
 			}
 
 			if err := m.Up(tx, ctx); err != nil {
-				tx.Rollback(ctx)
+				_ = tx.Rollback(ctx)
 				return fmt.Errorf("migration %d failed: %w", m.Version, err)
 			}
 
@@ -66,7 +68,7 @@ var dbMigrateCmd = &cobra.Command{
 				WHERE key = 'db.version'
 			`, m.Version)
 			if err != nil {
-				tx.Rollback(ctx)
+				_ = tx.Rollback(ctx)
 				return err
 			}
 
@@ -78,10 +80,26 @@ var dbMigrateCmd = &cobra.Command{
 		}
 
 		fmt.Println("All migrations complete")
+
+		if syncSchema {
+			fmt.Println("Syncing schema.sql...")
+
+			if err := SchemaSync(); err != nil {
+				fmt.Println("sync failed, please manually try to sync schema.sql")
+			}
+		}
+
 		return nil
 	},
 }
 
 func init() {
+	dbMigrateCmd.Flags().BoolVar(
+		&syncSchema,
+		"sync",
+		false,
+		"Sync schema.sql after successful migrations",
+	)
+
 	rootCmd.AddCommand(dbMigrateCmd)
 }
