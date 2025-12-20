@@ -26,6 +26,11 @@ func cleanSchemaRegex(schema string) string {
 		re   *regexp.Regexp
 		repl string
 	}{
+		// 0. Remove pg_catalog.set_config(search_path...)
+		{regexp.MustCompile(
+			`(?m)^SELECT\s+pg_catalog\.set_config\('search_path',\s*''\s*,\s*false\);\s*`,
+		), ``},
+
 		// 1. Remove all SET statements
 		{regexp.MustCompile(`(?m)^SET\s+.*?;\s*`), ``},
 
@@ -38,7 +43,7 @@ func cleanSchemaRegex(schema string) string {
 		// 4. Remove COMMENT ON statements
 		{regexp.MustCompile(`(?m)^COMMENT ON .*?;\s*`), ``},
 
-		// 5. Remove public. schema prefix (tables, indexes, sequences, etc.)
+		// 5. Remove public. schema prefix
 		{regexp.MustCompile(`\bpublic\.`), ``},
 
 		// 6. Collapse excessive blank lines

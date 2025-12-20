@@ -1,7 +1,5 @@
 
 
-SELECT pg_catalog.set_config('search_path', '', false);
-
 CREATE TABLE conversations (
     id integer NOT NULL,
     customer_id integer,

@@ -5,6 +5,7 @@ import (
 	"dewkit/config"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -16,10 +17,14 @@ var installCmd = &cobra.Command{
 	Short: "Install dewkit",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Installing dewkit...")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		db, _ := config.GetDB(ctx)
+		db, err := config.GetDB(ctx)
+		if err != nil {
+			return err
+		}
 		defer db.Close(ctx)
 
 		return install(ctx, db)
@@ -33,12 +38,11 @@ func init() {
 var initialSettings = map[string]any{
 	"app.baseUrl":        "https://dewkit.app",
 	"app.supportEmail":   "support@dewkit.app",
-	"db.version":         0,
 	"system.maintenance": false,
 }
 
 func install(ctx context.Context, db *pgx.Conn) error {
-	// 1. Checking if settings table exists
+	// 1. Check if settings table already exists
 	var exists bool
 	err := db.QueryRow(ctx, `
 		SELECT EXISTS (
@@ -51,35 +55,39 @@ func install(ctx context.Context, db *pgx.Conn) error {
 	}
 
 	if exists {
-		fmt.Println("Skipping installation! Settings has been initiated already")
+		fmt.Println("Skipping installation! Database already initialized")
 		return nil
 	}
 
-	// 2. Creating a table called settings
-	_, err = db.Exec(ctx, `
-		CREATE TABLE settings (
-			key TEXT PRIMARY KEY,
-			value JSONB NOT NULL
-		);
-	`)
+	// 2. Load schema.sql
+	schema, err := os.ReadFile("schema.sql")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read schema.sql: %w", err)
 	}
-	fmt.Println("Creating settings table")
 
-	// 3. Seeding with some initial set of data
+	// 3. Execute schema.sql
+	fmt.Println("Applying schema.sql...")
+	if _, err := db.Exec(ctx, string(schema)); err != nil {
+		return fmt.Errorf("failed to apply schema.sql: %w", err)
+	}
+
+	// 4. Seed initial settings (excluding db.version)
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		return err
 	}
-
 	defer tx.Rollback(ctx)
 
 	for key, value := range initialSettings {
+		if key == "db.version" {
+			continue
+		}
+
 		data, err := json.Marshal(value)
 		if err != nil {
 			return err
 		}
+
 		_, err = tx.Exec(ctx, `
 			INSERT INTO settings (key, value)
 			VALUES ($1, $2)
@@ -96,6 +104,6 @@ func install(ctx context.Context, db *pgx.Conn) error {
 		return err
 	}
 
-	fmt.Println("Dewkit installed successfully ...")
+	fmt.Println("Dewkit installed successfully 🎉")
 	return nil
 }
