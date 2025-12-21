@@ -1,14 +1,27 @@
 
 
+CREATE TYPE conversation_status AS ENUM (
+    'open',
+    'pending',
+    'resolved',
+    'archived'
+);
+
+CREATE TYPE user_role AS ENUM (
+    'admin',
+    'staff',
+    'superuser'
+);
+
 CREATE TABLE conversations (
     id integer NOT NULL,
-    customer_id integer,
+    customer_id bigint,
     customer_full_name text,
     customer_email text,
     status text NOT NULL,
     resolved_at timestamp with time zone,
     archived_at timestamp with time zone,
-    assigned_to integer,
+    assigned_to bigint,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -29,7 +42,7 @@ CREATE TABLE settings (
 );
 
 CREATE TABLE users (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     email text NOT NULL,
     full_name text NOT NULL,
     password_hash text NOT NULL,
@@ -43,7 +56,6 @@ CREATE TABLE users (
 );
 
 CREATE SEQUENCE users_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -58,9 +70,6 @@ ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regcl
 
 ALTER TABLE ONLY conversations
     ADD CONSTRAINT conversations_pkey PRIMARY KEY (id);
-
-ALTER TABLE ONLY settings
-    ADD CONSTRAINT settings_pkey PRIMARY KEY (key);
 
 ALTER TABLE ONLY users
     ADD CONSTRAINT users_email_key UNIQUE (email);
@@ -77,7 +86,7 @@ ALTER TABLE ONLY conversations
 
 -- Ensure db.version is set to latest migration
 INSERT INTO settings (key, value)
-VALUES ('db.version', to_jsonb(4::int))
+VALUES ('db.version', to_jsonb(3::int))
 ON CONFLICT (key)
 DO UPDATE SET value = EXCLUDED.value;
 	

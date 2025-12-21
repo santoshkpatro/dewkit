@@ -12,15 +12,22 @@ var V3 = Migration{
 		_, err := tx.Exec(
 			ctx,
 			`
+			CREATE TYPE conversation_status AS ENUM (
+				'open',
+				'pending',
+				'resolved',
+				'archived'
+			);
+
 			CREATE TABLE conversations (
 				id SERIAL PRIMARY KEY,
-				customer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+				customer_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
 				customer_full_name TEXT,
 				customer_email TEXT,
 				status TEXT NOT NULL,
 				resolved_at TIMESTAMPTZ,
 				archived_at TIMESTAMPTZ,
-				assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
+				assigned_to BIGINT REFERENCES users(id) ON DELETE SET NULL,
 
 				created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -34,6 +41,7 @@ var V3 = Migration{
 			ctx,
 			`
 			DROP TABLE IF EXISTS conversations;
+			DROP TYPE IF EXISTS conversation_status;
 			`,
 		)
 		return err

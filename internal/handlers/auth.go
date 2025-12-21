@@ -12,10 +12,14 @@ func (app *AppContext) LoginHandler(c echo.Context) error {
 	var req auth.LoginRequest
 
 	if err := c.Bind(&req); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body."})
 	}
 
-	fmt.Println("User-", req.Email, req.Password)
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Invalid request."})
+	}
+
+	fmt.Println("User- ", req.Email, req.Password)
 
 	return c.JSON(http.StatusOK, map[string]string{"hello": "world"})
 }

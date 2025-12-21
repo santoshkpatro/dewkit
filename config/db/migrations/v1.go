@@ -13,7 +13,7 @@ var V1 = Migration{
 			ctx,
 			`
 			CREATE TABLE users (
-				id SERIAL PRIMARY KEY,
+				id BIGSERIAL PRIMARY KEY,
 				email TEXT NOT NULL UNIQUE,
 				full_name TEXT NOT NULL,
 				password_hash TEXT NOT NULL,
