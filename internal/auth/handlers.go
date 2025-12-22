@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,7 +19,20 @@ func LoginHandler(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Invalid request."})
 	}
 
-	fmt.Println("User- ", req.Email, req.Password)
+	authService := NewService()
+	err := authService.Authenticate(req.Email, req.Password)
+	if err != nil {
+		fmt.Println("Erro", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid credentials"})
+	}
 
-	return c.JSON(http.StatusOK, map[string]string{"hello": "world"})
+	db := c.Get("db").(*sqlx.DB)
+	var loggedInUser LoggedInUserResponse
+	err = db.Get(&loggedInUser, `SELECT email, full_name, role FROM users WHERE email = $1`, req.Email)
+	if err != nil {
+		fmt.Println("Erro", err)
+		return c.JSON(http.StatusBadGateway, map[string]string{"error": "Failed to fetch logged in user information"})
+	}
+
+	return c.JSON(http.StatusOK, loggedInUser)
 }

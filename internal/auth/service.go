@@ -91,11 +91,10 @@ func (s *Service) CreateSuperuser(
 func (s *Service) Authenticate(email string, password string) error {
 	var storedHash, storedSalt string
 
-	err := s.DB.Get(
-		&storedHash,
+	err := s.DB.QueryRow(
 		`SELECT password_hash, password_salt FROM users WHERE email = $1`,
 		email,
-	)
+	).Scan(&storedHash, &storedSalt)
 	if err != nil {
 		return err
 	}
