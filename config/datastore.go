@@ -5,49 +5,66 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
-var DB *pgxpool.Pool
+var DB *sqlx.DB
 
 func SetupDB(ctx context.Context) error {
 	if DB != nil {
 		return nil // already initialized
 	}
 
-	config, err := pgxpool.ParseConfig(GetEnv("DB_URL"))
-	if err != nil {
-		return  err
-	}
+	dsn := GetEnv("DB_URL")
 
-	config.MaxConns = 20
-	config.MinConns = 5
-	config.MaxConnLifetime = time.Hour
-	config.MaxConnIdleTime = 30 * time.Minute
-
-	pool, err := pgxpool.NewWithConfig(ctx, config)
+	db, err := sqlx.ConnectContext(ctx, "postgres", dsn)
 	if err != nil {
 		return err
 	}
 
+	// Pool configuration
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(time.Hour)
+	db.SetConnMaxIdleTime(30 * time.Minute)
+
 	// Verify connection
-	if err := pool.Ping(ctx); err != nil {
+	if err := db.PingContext(ctx); err != nil {
 		return err
 	}
 
 	fmt.Println("DB Connected ...")
 
-	DB = pool
+	DB = db
 	return nil
 }
 
-func GetDB(ctx context.Context) (*pgx.Conn, error) {
-	return pgx.Connect(ctx, GetEnv("DB_URL"))
+func GetDB(ctx context.Context) (*sqlx.DB, error) {
+	dsn := GetEnv("DB_URL")
+
+	db, err := sqlx.ConnectContext(ctx, "pgx", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// Pool configuration
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(time.Hour)
+	db.SetConnMaxIdleTime(30 * time.Minute)
+
+	if err := db.PingContext(ctx); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
+
+	fmt.Println("DB Connected ...")
+	return db, nil
 }
 
 func CloseDB() {
 	if DB != nil {
-		DB.Close()
+		_ = DB.Close()
 	}
 }

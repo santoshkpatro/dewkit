@@ -1,16 +1,11 @@
 package migrations
 
-import (
-	"context"
-
-	"github.com/jackc/pgx/v5"
-)
+import "github.com/jmoiron/sqlx"
 
 var V3 = Migration{
 	Version: 3,
-	Up: func(tx pgx.Tx, ctx context.Context) error {
+	Up: func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
-			ctx,
 			`
 			CREATE TYPE conversation_status AS ENUM (
 				'open',
@@ -36,9 +31,8 @@ var V3 = Migration{
 		)
 		return err
 	},
-	Down: func(tx pgx.Tx, ctx context.Context) error {
+	Down: func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
-			ctx,
 			`
 			DROP TABLE IF EXISTS conversations;
 			DROP TYPE IF EXISTS conversation_status;

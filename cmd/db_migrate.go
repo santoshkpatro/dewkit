@@ -7,20 +7,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jmoiron/sqlx"
 	"github.com/spf13/cobra"
 )
 
 var syncSchema bool
 
-func getCurrentDBVersion(ctx context.Context, db *pgx.Conn) (int, error) {
+func getCurrentDBVersion(db *sqlx.DB) (int, error) {
 	var version int
 
-	err := db.QueryRow(ctx, `
+	err := db.Get(&version, `
 		SELECT value::int
 		FROM settings
 		WHERE key = 'db.version'
-	`).Scan(&version)
+	`)
 
 	return version, err
 }
@@ -29,16 +29,15 @@ var dbMigrateCmd = &cobra.Command{
 	Use:   "db_migrate",
 	Short: "DB Migration",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-
 		db, err := config.GetDB(ctx)
 		if err != nil {
-			return err
+			panic("Unable to connect to DB")
 		}
-		defer db.Close(ctx)
+		defer db.Close()
 
-		currentVersion, err := getCurrentDBVersion(ctx, db)
+		currentVersion, err := getCurrentDBVersion(db)
 		if err != nil {
 			return fmt.Errorf("failed to read db.version: %w", err)
 		}
@@ -52,27 +51,29 @@ var dbMigrateCmd = &cobra.Command{
 
 			fmt.Printf("Running migration %d...\n", m.Version)
 
-			tx, err := db.Begin(ctx)
+			tx, err := db.Beginx()
 			if err != nil {
 				return err
 			}
 
-			if err := m.Up(tx, ctx); err != nil {
-				_ = tx.Rollback(ctx)
+			// run migration
+			if err := m.Up(tx); err != nil {
+				_ = tx.Rollback()
 				return fmt.Errorf("migration %d failed: %w", m.Version, err)
 			}
 
-			_, err = tx.Exec(ctx, `
-				UPDATE settings
-				SET value = to_jsonb($1::int)
-				WHERE key = 'db.version'
-			`, m.Version)
+			// update db.version
+			_, err = tx.Exec(`
+			UPDATE settings
+			SET value = to_jsonb($1::int)
+			WHERE key = 'db.version'
+		`, m.Version)
 			if err != nil {
-				_ = tx.Rollback(ctx)
+				_ = tx.Rollback()
 				return err
 			}
 
-			if err := tx.Commit(ctx); err != nil {
+			if err := tx.Commit(); err != nil {
 				return err
 			}
 

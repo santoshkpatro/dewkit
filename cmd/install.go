@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jmoiron/sqlx"
 	"github.com/spf13/cobra"
 )
 
@@ -17,17 +17,16 @@ var installCmd = &cobra.Command{
 	Short: "Install dewkit",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("Installing dewkit...")
-
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		db, err := config.GetDB(ctx)
 		if err != nil {
-			return err
+			panic("Unable to connect to DB")
 		}
-		defer db.Close(ctx)
+		defer db.Close()
 
-		return install(ctx, db)
+		return install(db)
 	},
 }
 
@@ -41,15 +40,15 @@ var initialSettings = map[string]any{
 	"system.maintenance": false,
 }
 
-func install(ctx context.Context, db *pgx.Conn) error {
+func install(db *sqlx.DB) error {
 	// 1. Check if settings table already exists
 	var exists bool
-	err := db.QueryRow(ctx, `
+	err := db.Get(&exists, `
 		SELECT EXISTS (
 			SELECT FROM information_schema.tables
 			WHERE table_name = 'settings'
 		)
-	`).Scan(&exists)
+	`)
 	if err != nil {
 		return err
 	}
@@ -67,16 +66,16 @@ func install(ctx context.Context, db *pgx.Conn) error {
 
 	// 3. Execute schema.sql
 	fmt.Println("Applying schema.sql...")
-	if _, err := db.Exec(ctx, string(schema)); err != nil {
+	if _, err := db.Exec(string(schema)); err != nil {
 		return fmt.Errorf("failed to apply schema.sql: %w", err)
 	}
 
 	// 4. Seed initial settings (excluding db.version)
-	tx, err := db.Begin(ctx)
+	tx, err := db.Beginx()
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback()
 
 	for key, value := range initialSettings {
 		if key == "db.version" {
@@ -88,7 +87,7 @@ func install(ctx context.Context, db *pgx.Conn) error {
 			return err
 		}
 
-		_, err = tx.Exec(ctx, `
+		_, err = tx.Exec(`
 			INSERT INTO settings (key, value)
 			VALUES ($1, $2)
 			ON CONFLICT (key) DO NOTHING
@@ -100,7 +99,7 @@ func install(ctx context.Context, db *pgx.Conn) error {
 		fmt.Printf("Inserted setting: %s\n", key)
 	}
 
-	if err := tx.Commit(ctx); err != nil {
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 

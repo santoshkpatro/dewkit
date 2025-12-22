@@ -1,16 +1,11 @@
 package migrations
 
-import (
-	"context"
-
-	"github.com/jackc/pgx/v5"
-)
+import "github.com/jmoiron/sqlx"
 
 var V2 = Migration{
 	Version: 2,
-	Up: func(tx pgx.Tx, ctx context.Context) error {
+	Up: func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
-			ctx,
 			`
 			CREATE TYPE user_role AS ENUM ('admin', 'staff', 'superuser');
 
@@ -24,9 +19,8 @@ var V2 = Migration{
 		)
 		return err
 	},
-	Down: func(tx pgx.Tx, ctx context.Context) error {
+	Down: func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
-			ctx,
 			`
 			ALTER TABLE users
 				DROP COLUMN IF EXISTS is_password_expired,

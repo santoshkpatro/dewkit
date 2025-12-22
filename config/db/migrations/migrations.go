@@ -1,15 +1,13 @@
 package migrations
 
 import (
-	"context"
-
-	"github.com/jackc/pgx/v5"
+	"github.com/jmoiron/sqlx"
 )
 
 type Migration struct {
 	Version int
-	Up      func(tx pgx.Tx, ctx context.Context) error
-	Down    func(tx pgx.Tx, ctx context.Context) error
+	Up      func(tx *sqlx.Tx) error
+	Down    func(tx *sqlx.Tx) error
 }
 
 var All = []Migration{

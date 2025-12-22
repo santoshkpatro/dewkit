@@ -1,17 +1,12 @@
 package migrations
 
-import (
-	"context"
-
-	"github.com/jackc/pgx/v5"
-)
+import "github.com/jmoiron/sqlx"
 
 var V1 = Migration{
 	Version: 1,
-	Up: func(tx pgx.Tx, ctx context.Context) error {
-		_, err := tx.Exec(
-			ctx,
-			`
+
+	Up: func(tx *sqlx.Tx) error {
+		_, err := tx.Exec(`
 			CREATE TABLE users (
 				id BIGSERIAL PRIMARY KEY,
 				email TEXT NOT NULL UNIQUE,
@@ -20,15 +15,12 @@ var V1 = Migration{
 				salt TEXT NOT NULL,
 				is_active BOOLEAN NOT NULL DEFAULT TRUE
 			);
-			`,
-		)
+		`)
 		return err
 	},
-	Down: func(tx pgx.Tx, ctx context.Context) error {
-		_, err := tx.Exec(
-			ctx,
-			`DROP TABLE IF EXISTS users;`,
-		)
+
+	Down: func(tx *sqlx.Tx) error {
+		_, err := tx.Exec(`DROP TABLE IF EXISTS users;`)
 		return err
 	},
 }
