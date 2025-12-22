@@ -6,6 +6,8 @@ import (
 	"dewkit/config/middlewares"
 	"dewkit/internal/auth"
 	"fmt"
+	"log/slog"
+	"os"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -33,7 +35,23 @@ func (cv *AppValidator) Validate(i interface{}) error {
 	return cv.Validator.Struct(i)
 }
 
+func initLogger() {
+	env := config.GetEnvDefault("ENV", "production")
+	level := slog.LevelInfo
+
+	if env == "development" {
+		level = slog.LevelDebug
+	}
+
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
+	})
+
+	slog.SetDefault(slog.New(handler))
+}
+
 func runserver() {
+	initLogger()
 	fmt.Println("Staring dewkit server ...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

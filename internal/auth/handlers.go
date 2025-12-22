@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -12,27 +12,65 @@ func LoginHandler(c echo.Context) error {
 	var req LoginRequest
 
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body."})
+		slog.Debug(
+			"failed to bind login request",
+			"err", err,
+			"path", c.Path(),
+		)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"error": "Invalid request body",
+		})
 	}
 
 	if err := c.Validate(&req); err != nil {
-		return c.JSON(http.StatusUnprocessableEntity, map[string]string{"error": "Invalid request."})
+		slog.Debug(
+			"login request validation failed",
+			"email", req.Email,
+			"err", err,
+		)
+
+		return c.JSON(http.StatusUnprocessableEntity, echo.Map{
+			"error": "Invalid request",
+		})
 	}
 
 	authService := NewService()
-	err := authService.Authenticate(req.Email, req.Password)
-	if err != nil {
-		fmt.Println("Erro", err)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid credentials"})
+	if err := authService.Authenticate(req.Email, req.Password); err != nil {
+		slog.Warn(
+			"authentication failed",
+			"email", req.Email,
+			"err", err,
+		)
+
+		return c.JSON(http.StatusUnauthorized, echo.Map{
+			"error": "Invalid credentials",
+		})
 	}
 
 	db := c.Get("db").(*sqlx.DB)
+
 	var loggedInUser LoggedInUserResponse
-	err = db.Get(&loggedInUser, `SELECT email, full_name, role FROM users WHERE email = $1`, req.Email)
-	if err != nil {
-		fmt.Println("Erro", err)
-		return c.JSON(http.StatusBadGateway, map[string]string{"error": "Failed to fetch logged in user information"})
+	if err := db.Get(
+		&loggedInUser,
+		`SELECT email, full_name, role FROM users WHERE email = $1`,
+		req.Email,
+	); err != nil {
+		slog.Error(
+			"failed to fetch logged in user",
+			"email", req.Email,
+			"err", err,
+		)
+
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"error": "Failed to fetch logged in user information",
+		})
 	}
+
+	slog.Info(
+		"user logged in successfully",
+		"email", loggedInUser.Email,
+	)
 
 	return c.JSON(http.StatusOK, loggedInUser)
 }
