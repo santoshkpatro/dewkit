@@ -76,7 +76,7 @@ func (s *Service) CreateSuperuser(
 
 	// 4. Insert superuser
 	_, err = s.DB.Exec(
-		`INSERT INTO users (full_name, email, password_hash, salt, role)
+		`INSERT INTO users (full_name, email, password_hash, password_salt, role)
 		 VALUES ($1, $2, $3, $4, 'superuser')`,
 		fullName,
 		email,
