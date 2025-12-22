@@ -3,7 +3,8 @@ package cmd
 import (
 	"context"
 	"dewkit/config"
-	"dewkit/internal/handlers"
+	"dewkit/internal/middlewares"
+	"dewkit/internal/services/auth"
 	"fmt"
 	"time"
 
@@ -37,17 +38,21 @@ func runserver() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	config.SetupDB(ctx)
+	db, err := config.SetupDB(ctx)
+	if err != nil {
+		panic("Failed to setup DB")
+	}
 
 	e := echo.New()
 	e.Validator = &AppValidator{
 		Validator: validator.New(),
 	}
+	e.Use(middlewares.DBMiddleware(db))
 
 	api := e.Group("/api")
 	// ws := e.Group("/ws")
 
-	handlers.RegisterAPIRoutes(api)
+	auth.RegisterRoutes(api.Group("/auth"))
 
 	e.Logger.Fatal(e.Start(":8000"))
 }

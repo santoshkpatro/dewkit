@@ -1,15 +1,14 @@
-package handlers
+package auth
 
 import (
-	"dewkit/internal/services/auth"
 	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-func (app *AppContext) LoginHandler(c echo.Context) error {
-	var req auth.LoginRequest
+func LoginHandler(c echo.Context) error {
+	var req LoginRequest
 
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body."})

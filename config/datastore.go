@@ -11,16 +11,16 @@ import (
 
 var DB *sqlx.DB
 
-func SetupDB(ctx context.Context) error {
+func SetupDB(ctx context.Context) (*sqlx.DB, error) {
 	if DB != nil {
-		return nil // already initialized
+		return DB, nil // already initialized
 	}
 
 	dsn := GetEnv("DB_URL")
 
-	db, err := sqlx.ConnectContext(ctx, "postgres", dsn)
+	db, err := sqlx.ConnectContext(ctx, "pgx", dsn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Pool configuration
@@ -31,13 +31,13 @@ func SetupDB(ctx context.Context) error {
 
 	// Verify connection
 	if err := db.PingContext(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	fmt.Println("DB Connected ...")
 
 	DB = db
-	return nil
+	return db, nil
 }
 
 func GetDB(ctx context.Context) (*sqlx.DB, error) {

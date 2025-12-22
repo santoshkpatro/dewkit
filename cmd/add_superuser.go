@@ -2,10 +2,14 @@ package cmd
 
 import (
 	"bufio"
+	"context"
+	"dewkit/config"
+	"dewkit/internal/services/auth"
 	"fmt"
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -44,7 +48,16 @@ var addSuperUserCmd = &cobra.Command{
 		fmt.Println("Email:", email)
 		fmt.Println("Password:", password)
 
-		return nil
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		db, err := config.GetDB(ctx)
+		if err != nil {
+			fmt.Println("Failed to connect to DB, error - ", err)
+		}
+
+		authService := auth.Service{DB: db}
+		err = authService.CreateSuperuser(fullName, email, password)
+		return err
 	},
 }
 
