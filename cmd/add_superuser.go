@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 	"dewkit/config"
-	"dewkit/internal/services/auth"
+	"dewkit/internal/auth"
 	"fmt"
 	"os"
 	"strings"

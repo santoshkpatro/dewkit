@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 	"dewkit/config"
-	"dewkit/internal/middlewares"
-	"dewkit/internal/services/auth"
+	"dewkit/config/middlewares"
+	"dewkit/internal/auth"
 	"fmt"
 	"time"
 
