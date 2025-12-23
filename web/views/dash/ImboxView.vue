@@ -1,8 +1,12 @@
-<script setup></script>
+<script setup>
+import { onMounted } from 'vue'
+const emit = defineEmits(['route-change'])
+
+onMounted(() => {
+  emit('route-change', 'imbox')
+})
+</script>
 
 <template>
   <div>Imbox</div>
-  <div>
-    <a-button type="primary">Primary Button</a-button>
-  </div>
 </template>

@@ -124,6 +124,7 @@ func MetaHandler(c echo.Context) error {
 		WHERE key IN (
 			'app.baseUrl',
 			'app.supportEmail',
+			'app.orgName',
 			'system.maintenance'
 		)
 	`)
