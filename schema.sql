@@ -73,6 +73,9 @@ ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regcl
 ALTER TABLE ONLY conversations
     ADD CONSTRAINT conversations_pkey PRIMARY KEY (id);
 
+ALTER TABLE ONLY settings
+    ADD CONSTRAINT settings_key_key UNIQUE (key);
+
 ALTER TABLE ONLY users
     ADD CONSTRAINT users_email_key UNIQUE (email);
 
@@ -86,9 +89,15 @@ ALTER TABLE ONLY conversations
     ADD CONSTRAINT conversations_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL;
 
 
+
+-- Seed data
+INSERT INTO settings (key, value) VALUES
+('db.version', to_jsonb(0::int)),
+('app.baseUrl', to_jsonb('https://dewkit.app'::text)),
+('app.supportEmail', to_jsonb('support@dewkit.app'::text)),
+('system.maintenance', to_jsonb(false))
+ON CONFLICT (key) DO NOTHING;
 -- Ensure db.version is set to latest migration
-INSERT INTO settings (key, value)
-VALUES ('db.version', to_jsonb(4::int))
-ON CONFLICT (key)
-DO UPDATE SET value = EXCLUDED.value;
-	
+UPDATE settings
+SET value = to_jsonb(4::int)
+WHERE key = 'db.version';

@@ -11,3 +11,6 @@ type LoggedInUserResponse struct {
 	FullName string `json:"fullName" db:"full_name"`
 	Role     string `json:"role" db:"role"`
 }
+
+type SettingResponse struct {
+}

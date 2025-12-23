@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"dewkit/config"
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -22,7 +21,7 @@ var installCmd = &cobra.Command{
 
 		db, err := config.GetDB(ctx)
 		if err != nil {
-			panic("Unable to connect to DB")
+			return fmt.Errorf("unable to connect to DB: %w", err)
 		}
 		defer db.Close()
 
@@ -32,12 +31,6 @@ var installCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(installCmd)
-}
-
-var initialSettings = map[string]any{
-	"app.baseUrl":        "https://dewkit.app",
-	"app.supportEmail":   "support@dewkit.app",
-	"system.maintenance": false,
 }
 
 func install(db *sqlx.DB) error {
@@ -68,39 +61,6 @@ func install(db *sqlx.DB) error {
 	fmt.Println("Applying schema.sql...")
 	if _, err := db.Exec(string(schema)); err != nil {
 		return fmt.Errorf("failed to apply schema.sql: %w", err)
-	}
-
-	// 4. Seed initial settings (excluding db.version)
-	tx, err := db.Beginx()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	for key, value := range initialSettings {
-		if key == "db.version" {
-			continue
-		}
-
-		data, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
-
-		_, err = tx.Exec(`
-			INSERT INTO settings (key, value)
-			VALUES ($1, $2)
-			ON CONFLICT (key) DO NOTHING
-		`, key, data)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Inserted setting: %s\n", key)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
 	}
 
 	fmt.Println("Dewkit installed successfully 🎉")

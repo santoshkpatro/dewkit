@@ -90,16 +90,24 @@ func SchemaSync() error {
 
 	cleaned := cleanSchemaRegex(string(out))
 
+	// ---- Seed FIRST ----
+	seedSQL, err := os.ReadFile("seed.sql")
+	if err != nil {
+		return fmt.Errorf("failed to read seed.sql: %w", err)
+	}
+
+	cleaned += "\n\n-- Seed data\n"
+	cleaned += string(seedSQL)
+
+	// ---- Final db.version update LAST ----
 	latestVersion := getLatestMigrationVersion()
 
-	// Append db.version update so fresh installs are up-to-date
 	cleaned += fmt.Sprintf(`
 -- Ensure db.version is set to latest migration
-INSERT INTO settings (key, value)
-VALUES ('db.version', to_jsonb(%d::int))
-ON CONFLICT (key)
-DO UPDATE SET value = EXCLUDED.value;
-	`, latestVersion)
+UPDATE settings
+SET value = to_jsonb(%d::int)
+WHERE key = 'db.version';
+`, latestVersion)
 
 	return os.WriteFile("schema.sql", []byte(cleaned), 0644)
 }

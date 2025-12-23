@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"dewkit/internal/utils"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -95,5 +97,61 @@ func LoginHandler(c echo.Context) error {
 }
 
 func ProfileHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "OK")
+	userID := c.Get("user_id").(int)
+	db := c.Get("db").(*sqlx.DB)
+
+	var user LoggedInUserResponse
+	if err := db.Get(
+		&user,
+		`SELECT id, email, full_name, role FROM users WHERE id = $1`,
+		userID,
+	); err != nil {
+		slog.Error("failed to fetch user profile", "err", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"error": "Failed to fetch user profile",
+		})
+	}
+
+	return c.JSON(http.StatusOK, user)
+}
+
+func MetaHandler(c echo.Context) error {
+	db := c.Get("db").(*sqlx.DB)
+
+	rows, err := db.Queryx(`
+		SELECT key, value
+		FROM settings
+		WHERE key IN (
+			'app.baseUrl',
+			'app.supportEmail',
+			'system.maintenance'
+		)
+	`)
+	if err != nil {
+		slog.Error("failed to fetch meta settings", "err", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"error": "Failed to load app metadata",
+		})
+	}
+	defer rows.Close()
+
+	meta := make(map[string]any)
+
+	for rows.Next() {
+		var key string
+		var raw []byte
+
+		if err := rows.Scan(&key, &raw); err != nil {
+			return err
+		}
+
+		var value any
+		if err := json.Unmarshal(raw, &value); err != nil {
+			return err
+		}
+
+		utils.SetNestedSettingsValue(meta, key, value)
+	}
+
+	return c.JSON(http.StatusOK, meta)
 }
