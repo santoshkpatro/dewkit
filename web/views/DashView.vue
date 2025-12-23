@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { RouterView, useRouter } from 'vue-router'
+import { RouterView, useRouter, useRoute } from 'vue-router'
 import {
   LayoutDashboard,
   Inbox,
@@ -17,6 +17,8 @@ import {
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const route = useRoute()
+
 const { settings } = useAuthStore()
 
 const activeRouteName = ref(null)
@@ -43,7 +45,7 @@ const teammates = ref([
 
 function navigate(item) {
   activeRouteName.value = item.name
-  router.push({ name: item.name })
+  router.push({ name: item.name, params: { projectId: route.params.projectId } })
 }
 
 function onChildRouteChange(routeName) {

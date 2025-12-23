@@ -5,6 +5,7 @@ import (
 	"dewkit/config"
 	"dewkit/config/middlewares"
 	"dewkit/internal/auth"
+	"dewkit/internal/projects"
 	"fmt"
 	"net/http"
 	"time"
@@ -66,7 +67,8 @@ func runserver() {
 	api := e.Group("/api")
 	// ws := e.Group("/ws")
 
-	auth.RegisterRoutes(api.Group("/auth"))
+	auth.RegisterAPIRoutes(api.Group("/auth"))
+	projects.RegisterAPIRoutes(api.Group("/projects"))
 
 	e.Logger.Fatal(e.Start(":8000"))
 }

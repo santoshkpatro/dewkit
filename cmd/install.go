@@ -34,7 +34,6 @@ func init() {
 }
 
 func install(db *sqlx.DB) error {
-	// 1. Check if settings table already exists
 	var exists bool
 	err := db.Get(&exists, `
 		SELECT EXISTS (
@@ -51,13 +50,11 @@ func install(db *sqlx.DB) error {
 		return nil
 	}
 
-	// 2. Load schema.sql
 	schema, err := os.ReadFile("schema.sql")
 	if err != nil {
 		return fmt.Errorf("failed to read schema.sql: %w", err)
 	}
 
-	// 3. Execute schema.sql
 	fmt.Println("Applying schema.sql...")
 	if _, err := db.Exec(string(schema)); err != nil {
 		return fmt.Errorf("failed to apply schema.sql: %w", err)

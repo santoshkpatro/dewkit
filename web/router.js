@@ -4,6 +4,8 @@ import IndexView from '@/views/IndexView.vue'
 import LoginView from '@/views/LoginView.vue'
 import DashView from '@/views/DashView.vue'
 import ImboxView from '@/views/dash/ImboxView.vue'
+import OverviewView from '@/views/dash/OverviewView.vue'
+import CreateView from '@/views/CreateView.vue'
 
 import { useAuthStore } from '@/stores/auth'
 
@@ -16,10 +18,22 @@ const router = createRouter({
       name: 'login',
     },
     {
-      path: '/dash',
+      path: '/create',
+      component: CreateView,
+      name: 'create',
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/:projectId/dash',
       component: DashView,
       meta: { requiresAuth: true },
       children: [
+        {
+          path: 'overview',
+          component: OverviewView,
+          name: 'overview',
+          meta: { requiresAuth: true },
+        },
         {
           path: 'imbox',
           component: ImboxView,

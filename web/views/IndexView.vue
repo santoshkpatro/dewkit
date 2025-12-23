@@ -2,10 +2,22 @@
 import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 
-const router = useRouter()
+import { projectListAPI } from '@/http'
+import { useProjectStore } from '@/stores/project'
 
-onMounted(() => {
-  router.push({ name: 'imbox' })
+const router = useRouter()
+const projectStore = useProjectStore()
+
+const loadProjects = async () => {
+  const { data } = await projectListAPI()
+  projectStore.setProjects(data)
+}
+
+onMounted(async () => {
+  await loadProjects()
+  if (projectStore.projects.length == 0) {
+    router.push({ name: 'create' })
+  }
 })
 </script>
 

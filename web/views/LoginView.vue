@@ -3,7 +3,7 @@ import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { Mail, Lock, Github } from 'lucide-vue-next'
 
-import { authLoginAPI } from '@/http'
+import { authLoginAPI, projectListAPI } from '@/http'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -15,9 +15,12 @@ const form = reactive({
 
 const submit = async () => {
   try {
-    const { data } = await authLoginAPI(form)
-    authStore.loginUser(data)
-    router.push({ name: 'imbox' })
+    const loginResp = await authLoginAPI(form)
+    authStore.loginUser(loginResp.data)
+
+    const projectsResp = await projectListAPI()
+
+    // router.push({ name: 'imbox' })
   } catch (error) {
     console.log('Error', error)
   }
