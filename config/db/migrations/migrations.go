@@ -15,4 +15,5 @@ var All = []Migration{
 	V2,
 	V3,
 	V4,
+	V5,
 }

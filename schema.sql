@@ -7,6 +7,11 @@ CREATE TYPE conversation_status AS ENUM (
     'archived'
 );
 
+CREATE TYPE project_member_role AS ENUM (
+    'admin',
+    'collaborator'
+);
+
 CREATE TYPE user_role AS ENUM (
     'admin',
     'staff',
@@ -14,7 +19,7 @@ CREATE TYPE user_role AS ENUM (
 );
 
 CREATE TABLE conversations (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     customer_id bigint,
     customer_full_name text,
     customer_email text,
@@ -23,7 +28,8 @@ CREATE TABLE conversations (
     archived_at timestamp with time zone,
     assigned_to bigint,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    project_id bigint
 );
 
 CREATE SEQUENCE conversations_id_seq
@@ -35,6 +41,43 @@ CREATE SEQUENCE conversations_id_seq
     CACHE 1;
 
 ALTER SEQUENCE conversations_id_seq OWNED BY conversations.id;
+
+CREATE TABLE project_members (
+    id bigint NOT NULL,
+    project_id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    role project_member_role NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE project_members_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE project_members_id_seq OWNED BY project_members.id;
+
+CREATE TABLE projects (
+    id bigint NOT NULL,
+    name text NOT NULL,
+    description text,
+    code text NOT NULL,
+    created_by_id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE projects_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE projects_id_seq OWNED BY projects.id;
 
 CREATE TABLE settings (
     key text NOT NULL,
@@ -68,10 +111,26 @@ ALTER SEQUENCE users_id_seq OWNED BY users.id;
 
 ALTER TABLE ONLY conversations ALTER COLUMN id SET DEFAULT nextval('conversations_id_seq'::regclass);
 
+ALTER TABLE ONLY project_members ALTER COLUMN id SET DEFAULT nextval('project_members_id_seq'::regclass);
+
+ALTER TABLE ONLY projects ALTER COLUMN id SET DEFAULT nextval('projects_id_seq'::regclass);
+
 ALTER TABLE ONLY users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
 
 ALTER TABLE ONLY conversations
     ADD CONSTRAINT conversations_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY project_members
+    ADD CONSTRAINT project_members_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY project_members
+    ADD CONSTRAINT project_members_unique UNIQUE (project_id, user_id);
+
+ALTER TABLE ONLY projects
+    ADD CONSTRAINT projects_code_key UNIQUE (code);
+
+ALTER TABLE ONLY projects
+    ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY settings
     ADD CONSTRAINT settings_key_key UNIQUE (key);
@@ -88,6 +147,18 @@ ALTER TABLE ONLY conversations
 ALTER TABLE ONLY conversations
     ADD CONSTRAINT conversations_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL;
 
+ALTER TABLE ONLY conversations
+    ADD CONSTRAINT fk_conversations_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL;
+
+ALTER TABLE ONLY project_members
+    ADD CONSTRAINT fk_project_members_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY project_members
+    ADD CONSTRAINT fk_project_members_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY projects
+    ADD CONSTRAINT fk_projects_created_by FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE CASCADE;
+
 
 
 -- Seed data
@@ -100,5 +171,5 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 -- Ensure db.version is set to latest migration
 UPDATE settings
-SET value = to_jsonb(4::int)
+SET value = to_jsonb(5::int)
 WHERE key = 'db.version';
