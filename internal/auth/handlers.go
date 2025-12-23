@@ -135,7 +135,7 @@ func MetaHandler(c echo.Context) error {
 	}
 	defer rows.Close()
 
-	meta := make(map[string]any)
+	settings := make(map[string]any)
 
 	for rows.Next() {
 		var key string
@@ -150,8 +150,34 @@ func MetaHandler(c echo.Context) error {
 			return err
 		}
 
-		utils.SetNestedSettingsValue(meta, key, value)
+		utils.SetNestedSettingsValue(settings, key, value)
 	}
 
-	return c.JSON(http.StatusOK, meta)
+	var loggedInUser *LoggedInUserResponse = nil
+
+	sess, err := session.Get("session", c)
+	if err != nil {
+		slog.Error("failed to get session in meta", "err", err)
+	} else {
+		authenticated, _ := sess.Values["authenticated"].(bool)
+		userID, _ := sess.Values["user_id"].(int)
+
+		if authenticated && userID > 0 {
+			var user LoggedInUserResponse
+			if err := db.Get(
+				&user,
+				`SELECT id, email, full_name, role FROM users WHERE id = $1`,
+				userID,
+			); err != nil {
+				slog.Error("failed to fetch logged-in user for meta", "err", err)
+			} else {
+				loggedInUser = &user
+			}
+		}
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"settings":     settings,
+		"loggedInUser": loggedInUser,
+	})
 }

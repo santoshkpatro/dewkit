@@ -1,17 +1,26 @@
 <script setup>
 import { reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import { Mail, Lock, Github } from 'lucide-vue-next'
 
+import { authLoginAPI } from '@/http'
+import { useAuthStore } from '@/stores/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
 const form = reactive({
   email: '',
   password: '',
 })
 
-const submit = () => {
-  console.log({
-    email: form.email,
-    password: form.password,
-  })
+const submit = async () => {
+  try {
+    const { data } = await authLoginAPI(form)
+    authStore.loginUser(data)
+    router.push({ name: 'imbox' })
+  } catch (error) {
+    console.log('Error', error)
+  }
 }
 </script>
 

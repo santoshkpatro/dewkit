@@ -5,12 +5,23 @@ import { createPinia } from 'pinia'
 import Antd from 'ant-design-vue'
 
 import App from './App.vue'
-import router from './router.js'
+import router from './router'
+import { useAuthStore } from '@/stores/auth'
 
-const app = createApp(App)
+async function bootstrap() {
+  const app = createApp(App)
 
-app.use(createPinia())
-app.use(router)
-app.use(Antd)
+  const pinia = createPinia()
+  app.use(pinia)
 
-app.mount('#app')
+  const authStore = useAuthStore()
+  await authStore.setupAuth()
+
+  app.use(router)
+
+  app.use(Antd)
+
+  app.mount('#app')
+}
+
+bootstrap()
