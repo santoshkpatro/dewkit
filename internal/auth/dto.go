@@ -6,6 +6,7 @@ type LoginRequest struct {
 }
 
 type LoggedInUserResponse struct {
+	ID       int    `json:"-" db:"id"`
 	Email    string `json:"email" db:"email"`
 	FullName string `json:"fullName" db:"full_name"`
 	Role     string `json:"role" db:"role"`

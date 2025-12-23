@@ -6,11 +6,12 @@ import (
 	"dewkit/config/middlewares"
 	"dewkit/internal/auth"
 	"fmt"
-	"log/slog"
-	"os"
+	"net/http"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
 )
@@ -35,23 +36,7 @@ func (cv *AppValidator) Validate(i interface{}) error {
 	return cv.Validator.Struct(i)
 }
 
-func initLogger() {
-	env := config.GetEnvDefault("ENV", "production")
-	level := slog.LevelInfo
-
-	if env == "development" {
-		level = slog.LevelDebug
-	}
-
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: level,
-	})
-
-	slog.SetDefault(slog.New(handler))
-}
-
 func runserver() {
-	initLogger()
 	fmt.Println("Staring dewkit server ...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -61,11 +46,22 @@ func runserver() {
 		panic("Failed to setup DB")
 	}
 
+	isProd := config.GetEnvDefault("ENV", "production") == "production"
+	store := sessions.NewCookieStore([]byte(config.GetEnv("SECRET_KEY")))
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400,
+		HttpOnly: true,
+		Secure:   isProd, // true in prod (HTTPS)
+		SameSite: http.SameSiteLaxMode,
+	}
+
 	e := echo.New()
 	e.Validator = &AppValidator{
 		Validator: validator.New(),
 	}
 	e.Use(middlewares.DBMiddleware(db))
+	e.Use(session.Middleware(store))
 
 	api := e.Group("/api")
 	// ws := e.Group("/ws")
