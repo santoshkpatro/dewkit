@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router'
 import { onMounted } from 'vue'
 
-import { projectListAPI } from '@/http'
+import { projectListAPI } from '@/transport'
 import { useProjectStore } from '@/stores/project'
 
 const router = useRouter()
@@ -25,7 +25,7 @@ onMounted(async () => {
   const currentProject = projects.find((p) => p.id === currentProjectId)
 
   if (!currentProject) {
-    projectStore.removeActiveProject()
+    projectStore.removeCurrentProjectId()
     router.push({ name: 'imbox', params: { projectId: projects[0].id } })
   } else {
     router.push({ name: 'imbox', params: { projectId: currentProjectId } })

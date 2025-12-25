@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
-import { authMetaAPI } from '@/http'
+import { authMetaAPI } from '@/transport'
 
 export const useAuthStore = defineStore('auth', () => {
   const settings = ref(null)

@@ -70,10 +70,12 @@ func runserver() {
 	e.Use(session.Middleware(store))
 
 	api := e.Group("/api")
-	// ws := e.Group("/ws")
+	ws := e.Group("/ws")
 
 	auth.RegisterAPIRoutes(api.Group("/auth"))
 	projects.RegisterAPIRoutes(api.Group("/projects"))
+
+	projects.RegisterWSRoutes(ws.Group("/projects"))
 
 	e.Logger.Fatal(e.Start(":8000"))
 }

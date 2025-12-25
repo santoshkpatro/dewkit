@@ -3,7 +3,7 @@ import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { Mail, Lock, Github } from 'lucide-vue-next'
 
-import { authLoginAPI, projectListAPI } from '@/http'
+import { authLoginAPI, projectListAPI } from '@/transport'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()

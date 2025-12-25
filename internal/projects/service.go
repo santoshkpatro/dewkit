@@ -7,15 +7,18 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 )
 
 type Service struct {
-	DB *sqlx.DB
+	DB    *sqlx.DB
+	Cache *redis.Client
 }
 
 func NewService() *Service {
 	db := config.DB
-	return &Service{DB: db}
+	cache := config.Cache
+	return &Service{DB: db, Cache: cache}
 }
 
 func (s *Service) CreateProject(ownerId int, data ProjectCreateRequest) (ProjectListResponse, error) {

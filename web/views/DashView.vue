@@ -18,7 +18,7 @@ import {
 
 import { useAuthStore } from '@/stores/auth'
 import { useProjectStore } from '@/stores/project'
-import { projectListAPI, projectMembersAPI } from '@/http'
+import { projectListAPI, projectMembersAPI } from '@/transport'
 
 const router = useRouter()
 const route = useRoute()
@@ -26,7 +26,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
 
-const { settings } = storeToRefs(authStore)
+const { settings, loggedInUser } = storeToRefs(authStore)
 const { currentProject, members } = storeToRefs(projectStore)
 
 const user = ref({
@@ -73,9 +73,10 @@ const loadMembers = async () => {
 }
 
 onMounted(async () => {
-  projectStore.setActiveProject(route.params.projectId)
+  projectStore.setCurrentProject(route.params.projectId)
   await loadProjects()
   await loadMembers()
+  projectStore.connectImbox(route.params.projectId)
 })
 </script>
 
@@ -156,7 +157,7 @@ onMounted(async () => {
           </button>
           <div class="profile">
             <img :src="user.avatar" />
-            <span>{{ user.name }}</span>
+            <span>{{ loggedInUser.fullName }}</span>
           </div>
         </div>
       </header>
