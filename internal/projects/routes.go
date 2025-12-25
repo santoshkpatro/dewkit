@@ -7,6 +7,9 @@ import (
 )
 
 func RegisterAPIRoutes(g *echo.Group) {
-	g.GET("", ProjectListHandler, middlewares.LoggedInMiddleware)
-	g.POST("", ProjectCreateHandler, middlewares.LoggedInMiddleware)
+	g.Use(middlewares.LoggedInMiddleware)
+
+	g.GET("/:projectId/members", ProjectMembersHandler, middlewares.ProjectPermissionMiddleware)
+	g.GET("", ProjectListHandler)
+	g.POST("", ProjectCreateHandler)
 }

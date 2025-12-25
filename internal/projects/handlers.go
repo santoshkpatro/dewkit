@@ -24,6 +24,24 @@ func ProjectCreateHandler(c echo.Context) error {
 		})
 	}
 
+	db := c.Get("db").(*sqlx.DB)
+	var exists bool
+	err := db.Get(
+		&exists,
+		`SELECT EXISTS (SELECT 1 FROM projects WHERE name = $1)`,
+		req.Name,
+	)
+	if err != nil {
+		slog.Error("Failed to check for project name uniqueness", "err", err)
+		return c.JSON(http.StatusBadGateway, echo.Map{
+			"error": "Failed to creae project!",
+		})
+	}
+	if exists {
+		slog.Warn("A project already exists with the given name")
+		return c.JSON(http.StatusConflict, echo.Map{"error": "A project already exists with the given name"})
+	}
+
 	service := NewService()
 	project, err := service.CreateProject(userID, req)
 	if err != nil {
@@ -67,4 +85,20 @@ func ProjectListHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, projects)
+}
+
+func ProjectMembersHandler(c echo.Context) error {
+	userID := c.Get("user_id").(int)
+	projectId := c.Get("project_id").(int)
+	service := NewService()
+
+	members, err := service.ListMembers(projectId, &userID)
+	if err != nil {
+		slog.Error("failed to list members", "err", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"error": "Failed to list members",
+		})
+	}
+
+	return c.JSON(http.StatusOK, members)
 }

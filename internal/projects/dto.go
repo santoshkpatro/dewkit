@@ -15,3 +15,10 @@ type ProjectListResponse struct {
 	MemberRole  string    `json:"memberRole" db:"member_role"`
 	CreatedAt   time.Time `json:"createdAt" db:"created_at"`
 }
+
+type ProjectMemberResponse struct {
+	ID       int    `json:"id" db:"id"`
+	Email    string `json:"email" db:"email"`
+	FullName string `json:"fullName" db:"full_name"`
+	Role     string `json:"role" db:"role"`
+}

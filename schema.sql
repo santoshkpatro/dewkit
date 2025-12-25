@@ -130,6 +130,9 @@ ALTER TABLE ONLY projects
     ADD CONSTRAINT projects_code_key UNIQUE (code);
 
 ALTER TABLE ONLY projects
+    ADD CONSTRAINT projects_name_unique UNIQUE (name);
+
+ALTER TABLE ONLY projects
     ADD CONSTRAINT projects_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY settings
@@ -171,5 +174,5 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 -- Ensure db.version is set to latest migration
 UPDATE settings
-SET value = to_jsonb(5::int)
+SET value = to_jsonb(6::int)
 WHERE key = 'db.version';

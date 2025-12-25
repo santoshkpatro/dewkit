@@ -26,9 +26,10 @@ onMounted(async () => {
 
   if (!currentProject) {
     projectStore.removeActiveProject()
+    router.push({ name: 'imbox', params: { projectId: projects[0].id } })
+  } else {
+    router.push({ name: 'imbox', params: { projectId: currentProjectId } })
   }
-
-  router.push({ name: 'imbox', params: { projectId: projects[0].id } })
 })
 </script>
 

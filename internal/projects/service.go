@@ -2,6 +2,7 @@ package projects
 
 import (
 	"dewkit/config"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -119,4 +120,33 @@ func generateProjectCode() string {
 	return strings.ToUpper(
 		strings.ReplaceAll(uuid.New().String(), "-", ""),
 	)
+}
+
+func (s *Service) ListMembers(projectId int, currentUserID *int) ([]ProjectMemberResponse, error) {
+	baseQuery := `
+		SELECT 
+			pm.id, 
+			u.email, 
+			u.full_name, 
+			pm.role 
+		FROM project_members pm
+		JOIN users u ON pm.user_id = u.id
+		WHERE pm.project_id = $1
+	`
+
+	args := []any{projectId}
+	argPos := 2
+
+	if currentUserID != nil {
+		baseQuery += fmt.Sprintf(" AND pm.user_id != $%d", argPos)
+		args = append(args, *currentUserID)
+	}
+
+	members := []ProjectMemberResponse{}
+	if err := s.DB.Select(&members, baseQuery, args...); err != nil {
+		return nil, err
+	}
+
+	return members, nil
+
 }

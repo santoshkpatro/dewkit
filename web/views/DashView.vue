@@ -16,7 +16,7 @@ import {
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useProjectStore } from '@/stores/project'
-import { projectListAPI } from '@/http'
+import { projectListAPI, projectMembersAPI } from '@/http'
 
 const router = useRouter()
 const route = useRoute()
@@ -41,7 +41,7 @@ const navItems = [
 ]
 
 const teammates = ref([
-  { name: 'Alice Johnson', avatar: 'https://i.pravatar.cc/32?img=5', online: true },
+  { name: 'Alice Johnson', avatar: 'https://i.pravatar.cc/32?img=1', online: true },
   { name: 'Bob Robertson The Third', avatar: 'https://i.pravatar.cc/32?img=8', online: false },
   { name: 'Eve', avatar: 'https://i.pravatar.cc/32?img=12', online: true },
 ])
@@ -49,6 +49,20 @@ const teammates = ref([
 const loadProjects = async () => {
   const { data } = await projectListAPI()
   projectStore.setProjects(data)
+}
+
+const loadMembers = async () => {
+  const { data } = await projectMembersAPI(route.params.projectId)
+
+  const members = data.map((m) => {
+    return {
+      avatar: `https://i.pravatar.cc/32?img=${m.id}`,
+      online: false,
+      ...m,
+    }
+  })
+
+  projectStore.setMembers(members)
 }
 
 function navigate(item) {
@@ -63,6 +77,7 @@ function onChildRouteChange(routeName) {
 onMounted(() => {
   projectStore.setActiveProject(route.params.projectId)
   loadProjects()
+  loadMembers()
 })
 </script>
 
@@ -91,10 +106,10 @@ onMounted(() => {
         <div class="teammates">
           <p class="section-title">Teammates</p>
 
-          <div v-for="mate in teammates" :key="mate.name" class="teammate">
-            <img :src="mate.avatar" />
-            <span class="name">{{ mate.name }}</span>
-            <Dot :size="24" :class="mate.online ? 'online' : 'offline'" />
+          <div v-for="member in projectStore.members" :key="member.id" class="teammate">
+            <img :src="member.avatar" />
+            <span class="name">{{ member.fullName }}</span>
+            <Dot :size="24" :class="member.online ? 'online' : 'offline'" />
           </div>
         </div>
       </div>
