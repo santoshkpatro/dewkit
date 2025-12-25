@@ -9,7 +9,31 @@ import (
 )
 
 func ProjectCreateHandler(c echo.Context) error {
-	return nil
+	userID := c.Get("user_id").(int)
+	var req ProjectCreateRequest
+
+	if err := c.Bind(&req); err != nil {
+		slog.Debug(
+			"failed to bind login request",
+			"err", err,
+			"path", c.Path(),
+		)
+
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	service := NewService()
+	project, err := service.CreateProject(userID, req)
+	if err != nil {
+		slog.Error("failed to create project", "err", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"error": "Failed to create project",
+		})
+	}
+
+	return c.JSON(http.StatusCreated, project)
 }
 
 func ProjectListHandler(c echo.Context) error {

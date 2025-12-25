@@ -8,5 +8,13 @@ export const useProjectStore = defineStore('project', () => {
     projects.values = projectList
   }
 
-  return { projects, setProjects }
+  const setActiveProject = (projectId) => {
+    localStorage.setItem('currentProject', projectId)
+  }
+
+  const removeActiveProject = () => {
+    localStorage.removeItem('currentProject')
+  }
+
+  return { projects, setProjects, setActiveProject, removeActiveProject }
 })

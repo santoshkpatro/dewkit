@@ -10,14 +10,25 @@ const projectStore = useProjectStore()
 
 const loadProjects = async () => {
   const { data } = await projectListAPI()
-  projectStore.setProjects(data)
+  return data
 }
 
 onMounted(async () => {
-  await loadProjects()
-  if (projectStore.projects.length == 0) {
+  const projects = await loadProjects()
+
+  if (projects.length == 0) {
     router.push({ name: 'create' })
+    return
   }
+
+  const currentProjectId = parseInt(localStorage.getItem('currentProject'))
+  const currentProject = projects.find((p) => p.id === currentProjectId)
+
+  if (!currentProject) {
+    projectStore.removeActiveProject()
+  }
+
+  router.push({ name: 'imbox', params: { projectId: projects[0].id } })
 })
 </script>
 

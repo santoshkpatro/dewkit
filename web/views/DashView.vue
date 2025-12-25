@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import {
   LayoutDashboard,
@@ -15,11 +15,14 @@ import {
   Boxes,
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
+import { useProjectStore } from '@/stores/project'
+import { projectListAPI } from '@/http'
 
 const router = useRouter()
 const route = useRoute()
 
 const { settings } = useAuthStore()
+const projectStore = useProjectStore()
 
 const activeRouteName = ref(null)
 
@@ -43,6 +46,11 @@ const teammates = ref([
   { name: 'Eve', avatar: 'https://i.pravatar.cc/32?img=12', online: true },
 ])
 
+const loadProjects = async () => {
+  const { data } = await projectListAPI()
+  projectStore.setProjects(data)
+}
+
 function navigate(item) {
   activeRouteName.value = item.name
   router.push({ name: item.name, params: { projectId: route.params.projectId } })
@@ -51,6 +59,11 @@ function navigate(item) {
 function onChildRouteChange(routeName) {
   activeRouteName.value = routeName
 }
+
+onMounted(() => {
+  projectStore.setActiveProject(route.params.projectId)
+  loadProjects()
+})
 </script>
 
 <template>
