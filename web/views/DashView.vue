@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterView, useRouter, useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import {
   LayoutDashboard,
   Inbox,
@@ -14,6 +15,7 @@ import {
   Bell,
   Boxes,
 } from 'lucide-vue-next'
+
 import { useAuthStore } from '@/stores/auth'
 import { useProjectStore } from '@/stores/project'
 import { projectListAPI, projectMembersAPI } from '@/http'
@@ -21,10 +23,11 @@ import { projectListAPI, projectMembersAPI } from '@/http'
 const router = useRouter()
 const route = useRoute()
 
-const { settings } = useAuthStore()
+const authStore = useAuthStore()
 const projectStore = useProjectStore()
 
-const activeRouteName = ref(null)
+const { settings } = storeToRefs(authStore)
+const { currentProject, members } = storeToRefs(projectStore)
 
 const user = ref({
   name: 'John Doe',
@@ -40,49 +43,60 @@ const navItems = [
   { name: 'configure', title: 'Configure', icon: Sliders },
 ]
 
-const teammates = ref([
-  { name: 'Alice Johnson', avatar: 'https://i.pravatar.cc/32?img=1', online: true },
-  { name: 'Bob Robertson The Third', avatar: 'https://i.pravatar.cc/32?img=8', online: false },
-  { name: 'Eve', avatar: 'https://i.pravatar.cc/32?img=12', online: true },
-])
+const activeRouteName = computed(() => route.name)
+
+function navigate(item) {
+  router.push({
+    name: item.name,
+    params: { projectId: route.params.projectId },
+  })
+}
 
 const loadProjects = async () => {
   const { data } = await projectListAPI()
   projectStore.setProjects(data)
+
+  const project = data.find((p) => p.id == route.params.projectId)
+  projectStore.setCurrentProject(project)
 }
 
 const loadMembers = async () => {
   const { data } = await projectMembersAPI(route.params.projectId)
 
-  const members = data.map((m) => {
-    return {
+  projectStore.setMembers(
+    data.map((m) => ({
+      ...m,
       avatar: `https://i.pravatar.cc/32?img=${m.id}`,
       online: false,
-      ...m,
-    }
-  })
-
-  projectStore.setMembers(members)
+    })),
+  )
 }
 
-function navigate(item) {
-  activeRouteName.value = item.name
-  router.push({ name: item.name, params: { projectId: route.params.projectId } })
-}
-
-function onChildRouteChange(routeName) {
-  activeRouteName.value = routeName
-}
-
-onMounted(() => {
+onMounted(async () => {
   projectStore.setActiveProject(route.params.projectId)
-  loadProjects()
-  loadMembers()
+  await loadProjects()
+  await loadMembers()
 })
 </script>
 
 <template>
-  <div class="layout">
+  <div v-if="!currentProject" class="layout">
+    <aside class="sidebar">
+      <a-skeleton active :paragraph="{ rows: 8 }" />
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <a-skeleton-input style="width: 240px" active />
+      </div>
+
+      <div class="content">
+        <a-skeleton active :paragraph="{ rows: 6 }" />
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="layout">
     <aside class="sidebar">
       <div class="sidebar-top">
         <h1 class="title">{{ settings.app.orgName }}</h1>
@@ -97,19 +111,17 @@ onMounted(() => {
           >
             <component :is="item.icon" :size="18" />
             <span class="label">{{ item.title }}</span>
-            <span v-if="item.count" class="count">
-              {{ item.count }}
-            </span>
+            <span v-if="item.count" class="count">{{ item.count }}</span>
           </div>
         </nav>
 
         <div class="teammates">
           <p class="section-title">Teammates</p>
 
-          <div v-for="member in projectStore.members" :key="member.id" class="teammate">
+          <div v-for="member in members" :key="member.id" class="teammate">
             <img :src="member.avatar" />
             <span class="name">{{ member.fullName }}</span>
-            <Dot :size="24" :class="member.online ? 'online' : 'offline'" />
+            <Dot :size="22" :class="member.online ? 'online' : 'offline'" />
           </div>
         </div>
       </div>
@@ -132,8 +144,8 @@ onMounted(() => {
         <div class="top-left">
           <Boxes :size="18" />
           <div class="project">
-            <span class="project-name">DWAPP</span>
-            <span class="project-id">YSAH344JSF32</span>
+            <span class="project-name">{{ currentProject.name }}</span>
+            <span class="project-id">{{ currentProject.code }}</span>
           </div>
         </div>
 
@@ -150,7 +162,7 @@ onMounted(() => {
       </header>
 
       <main class="content">
-        <RouterView @route-change="onChildRouteChange" />
+        <RouterView />
       </main>
     </div>
   </div>
@@ -197,7 +209,6 @@ onMounted(() => {
   gap: 10px;
   padding: 8px;
   font-size: 14px;
-  color: #333;
   border-radius: 6px;
   cursor: pointer;
 }
@@ -243,17 +254,17 @@ onMounted(() => {
   font-size: 13px;
 }
 
-.name {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .teammate img {
   width: 24px;
   height: 24px;
   border-radius: 50%;
+}
+
+.name {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .online {
@@ -262,12 +273,6 @@ onMounted(() => {
 
 .offline {
   color: #bdbdbd;
-}
-
-.sidebar-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .main {
@@ -281,8 +286,8 @@ onMounted(() => {
   border-bottom: 1px solid #eee;
   padding: 8px 16px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 }
 
 .top-left {
@@ -298,12 +303,12 @@ onMounted(() => {
 }
 
 .project-name {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
 }
 
 .project-id {
-  font-size: 12px;
+  font-size: 10px;
   color: #888;
 }
 
@@ -317,14 +322,12 @@ onMounted(() => {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
 }
 
 .profile {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
 }
 
 .profile img {

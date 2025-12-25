@@ -4,10 +4,15 @@ import { defineStore } from 'pinia'
 export const useProjectStore = defineStore('project', () => {
   const projects = ref([])
 
+  const currentProject = ref(null)
   const members = ref([])
 
   const setProjects = (projectList) => {
     projects.value = projectList
+  }
+
+  const setCurrentProject = (projectData) => {
+    currentProject.value = projectData
   }
 
   const setActiveProject = (projectId) => {
@@ -22,5 +27,14 @@ export const useProjectStore = defineStore('project', () => {
     members.value = memberList
   }
 
-  return { projects, setProjects, setActiveProject, removeActiveProject, setMembers, members }
+  return {
+    projects,
+    currentProject,
+    setCurrentProject,
+    setProjects,
+    setActiveProject,
+    removeActiveProject,
+    setMembers,
+    members,
+  }
 })
