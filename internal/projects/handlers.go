@@ -88,17 +88,37 @@ func ProjectListHandler(c echo.Context) error {
 }
 
 func ProjectMembersHandler(c echo.Context) error {
+	// ctx := c.Request().Context()
+
 	userID := c.Get("user_id").(int)
-	projectId := c.Get("project_id").(int)
+	projectID := c.Get("project_id").(int)
+	// cache := c.Get("cache").(*redis.Client)
+
 	service := NewService()
 
-	members, err := service.ListMembers(projectId, &userID)
+	// cacheKey := fmt.Sprintf("project:members:%d", projectID)
+
+	// 1️⃣ Try cache first
+	// if cached, err := cache.Get(ctx, cacheKey).Result(); err == nil {
+	// 	var members []ProjectMemberResponse
+	// 	if err := json.Unmarshal([]byte(cached), &members); err == nil {
+	// 		return c.JSON(http.StatusOK, members)
+	// 	}
+	// }
+
+	// 2️⃣ Cache miss → fetch from service / DB
+	members, err := service.ListMembers(projectID, &userID)
 	if err != nil {
 		slog.Error("failed to list members", "err", err)
 		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"error": "Failed to list members",
 		})
 	}
+
+	// 3️⃣ Store in cache (TTL = 10 seconds)
+	// if data, err := json.Marshal(members); err == nil {
+	// 	_ = cache.Set(ctx, cacheKey, data, 10*time.Second).Err()
+	// }
 
 	return c.JSON(http.StatusOK, members)
 }

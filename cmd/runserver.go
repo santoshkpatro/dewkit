@@ -46,6 +46,10 @@ func runserver() {
 	if err != nil {
 		panic("Failed to setup DB")
 	}
+	cache, err := config.SetupCache(ctx)
+	if err != nil {
+		panic("Failed to setup Cache")
+	}
 
 	isProd := config.GetEnvDefault("ENV", "production") == "production"
 	store := sessions.NewCookieStore([]byte(config.GetEnv("SECRET_KEY")))
@@ -62,6 +66,7 @@ func runserver() {
 		Validator: validator.New(),
 	}
 	e.Use(middlewares.DBMiddleware(db))
+	e.Use(middlewares.CacheMiddleware(cache))
 	e.Use(session.Middleware(store))
 
 	api := e.Group("/api")
