@@ -2,11 +2,9 @@ package projects
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 )
@@ -24,7 +22,7 @@ func ImboxConsumer(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	cache := c.Get("cache").(*redis.Client)
-	db := c.Get("db").(*sqlx.DB)
+	// db := c.Get("db").(*sqlx.DB)
 
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
@@ -32,17 +30,7 @@ func ImboxConsumer(c echo.Context) error {
 	}
 	defer ws.Close()
 
-	var projectCode string
-	query := `
-		SELECT code FROM projects WHERE id = $1
-	`
-	err = db.Get(&projectCode, query, projectID)
-	if err != nil {
-		slog.Warn("No project found with the given project id")
-		c.JSON(http.StatusNotFound, echo.Map{"error": "No project found."})
-	}
-
-	channel := fmt.Sprintf("project:%s:imbox", projectCode)
+	channel := fmt.Sprintf("project:%s:imbox", projectID)
 	sub := cache.Subscribe(ctx, channel)
 	defer sub.Close()
 

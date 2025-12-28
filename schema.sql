@@ -88,7 +88,7 @@ CREATE TABLE users (
     id bigint NOT NULL,
     email text NOT NULL,
     full_name text NOT NULL,
-    password_hash text NOT NULL,
+    password_hash text,
     password_salt text,
     is_active boolean DEFAULT true NOT NULL,
     is_password_expired boolean DEFAULT false NOT NULL,
@@ -97,7 +97,9 @@ CREATE TABLE users (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     password_changed_at timestamp without time zone,
-    failed_login_attempts integer DEFAULT 0 NOT NULL
+    failed_login_attempts integer DEFAULT 0 NOT NULL,
+    is_customer boolean DEFAULT false NOT NULL,
+    customer_identifier text
 );
 
 CREATE SEQUENCE users_id_seq
@@ -139,10 +141,15 @@ ALTER TABLE ONLY settings
     ADD CONSTRAINT settings_key_key UNIQUE (key);
 
 ALTER TABLE ONLY users
+    ADD CONSTRAINT users_customer_identifier_unique UNIQUE (customer_identifier);
+
+ALTER TABLE ONLY users
     ADD CONSTRAINT users_email_key UNIQUE (email);
 
 ALTER TABLE ONLY users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+CREATE INDEX idx_users_is_customer ON users USING btree (is_customer);
 
 ALTER TABLE ONLY conversations
     ADD CONSTRAINT conversations_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL;
@@ -174,5 +181,5 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 -- Ensure db.version is set to latest migration
 UPDATE settings
-SET value = to_jsonb(6::int)
+SET value = to_jsonb(7::int)
 WHERE key = 'db.version';

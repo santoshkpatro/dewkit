@@ -6,6 +6,7 @@ import (
 	"dewkit/config/middlewares"
 	"dewkit/internal/auth"
 	"dewkit/internal/projects"
+	"dewkit/internal/transport"
 	"fmt"
 	"net/http"
 	"time"
@@ -73,9 +74,12 @@ func runserver() {
 	ws := e.Group("/ws")
 
 	auth.RegisterAPIRoutes(api.Group("/auth"))
-	projects.RegisterAPIRoutes(api.Group("/projects"))
 
+	projects.RegisterAPIRoutes(api.Group("/projects"))
 	projects.RegisterWSRoutes(ws.Group("/projects"))
+
+	transport.RegisterWSRoutes(ws.Group("/transport"))
+	transport.RegisterAPIRoutes(api.Group("/transport"))
 
 	e.Logger.Fatal(e.Start(":8000"))
 }
