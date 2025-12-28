@@ -30,15 +30,43 @@ func (s *Service) NewChatSession(ctx context.Context, chat ChatInitiateRequest) 
 		return nil, err
 	}
 
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
 	var conversationId int
-	query := `
+	conversationQuery := `
 		INSERT INTO 
 		conversations (customer_email, customer_full_name, status, project_id) 
 		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`
-	err = s.DB.QueryRow(query, chat.CustomerEmail, chat.CustomerFullName, "open", project.ID).Scan(&conversationId)
+	err = tx.QueryRow(conversationQuery, chat.CustomerEmail, chat.CustomerFullName, "open", project.ID).Scan(&conversationId)
 	if err != nil {
+		return nil, err
+	}
+	messageQuery := `
+		INSERT INTO messages
+			(conversation_id, sender_type, body)
+		VALUES ($1, $2, $3)
+	`
+	_, err = tx.ExecContext(
+		ctx,
+		messageQuery,
+		conversationId,
+		"customer",
+		chat.Message,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
 		return nil, err
 	}
 

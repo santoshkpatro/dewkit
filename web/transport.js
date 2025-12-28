@@ -15,6 +15,11 @@ export const authLoginAPI = (data) => http.post('/auth/login', data)
 export const projectListAPI = () => http.get('/projects')
 export const projectMembersAPI = (projectId) => http.get(`/projects/${projectId}/members`)
 
+export const conversationListAPI = (projectId, params) =>
+  http.get(`/projects/${projectId}/conversations`, {
+    params,
+  })
+
 function createWebSocket(path) {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
   const host = window.location.host

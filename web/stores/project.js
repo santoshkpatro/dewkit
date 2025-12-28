@@ -7,6 +7,8 @@ export const useProjectStore = defineStore('project', () => {
   const currentProject = ref(null)
   const members = ref([])
 
+  const conversations = ref([])
+
   const currentProjectId = ref(localStorage.getItem('currentProject'))
 
   const { socket, isConnected, connect, disconnect } = useImboxSocket()
@@ -41,6 +43,10 @@ export const useProjectStore = defineStore('project', () => {
     members.value = memberList
   }
 
+  const setConversations = (conversationsList) => {
+    conversations.value = conversationsList
+  }
+
   watch(currentProjectId, (id) => {
     if (!id || !projects.value.length) return
     const project = projects.value.find((p) => p.id == id)
@@ -63,5 +69,7 @@ export const useProjectStore = defineStore('project', () => {
     setCurrentProjectId,
     removeCurrentProjectId,
     setMembers,
+    conversations,
+    setConversations,
   }
 })

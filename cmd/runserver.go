@@ -5,6 +5,7 @@ import (
 	"dewkit/config"
 	"dewkit/config/middlewares"
 	"dewkit/internal/auth"
+	"dewkit/internal/conversations"
 	"dewkit/internal/projects"
 	"dewkit/internal/transport"
 	"fmt"
@@ -80,6 +81,8 @@ func runserver() {
 
 	transport.RegisterWSRoutes(ws.Group("/transport"))
 	transport.RegisterAPIRoutes(api.Group("/transport"))
+
+	conversations.RegisterAPIRoutes(api.Group("/projects/:projectId"))
 
 	e.Logger.Fatal(e.Start(":8000"))
 }
