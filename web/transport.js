@@ -19,6 +19,12 @@ export const conversationListAPI = (projectId, params) =>
   http.get(`/projects/${projectId}/conversations`, {
     params,
   })
+export const conversationMessageListAPI = (projectId, conversationId, params) =>
+  http.get(`/projects/${projectId}/conversations/${conversationId}/messages`, {
+    params,
+  })
+export const conversationMessageCreateAPI = (projectId, conversationId, data) =>
+  http.post(`/projects/${projectId}/conversations/${conversationId}/messages`, data)
 
 function createWebSocket(path) {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'

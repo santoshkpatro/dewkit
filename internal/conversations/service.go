@@ -57,6 +57,60 @@ func (s *Service) ListActiveConversations(projectId int, status string) ([]Conve
 	return conversations, nil
 }
 
-func (s *Service) ConversationMessages(conversationId int) {
+func (s *Service) ConversationMessages(conversationId int) ([]MessageResponse, error) {
+	query := `
+		SELECT 
+			m.id,
+			m.sender_type,
+			m.body,
+			m.created_at
+		FROM messages m
+		WHERE m.conversation_id = $1
+		AND m.is_internal = false
+		ORDER BY m.created_at ASC
+	`
 
+	messages := []MessageResponse{}
+	err := s.DB.Select(&messages, query, conversationId)
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+
+}
+
+func (s *Service) CreateConversationMessage(conversationId int, userId int, message MessageRequest) (MessageResponse, error) {
+	query := `
+		INSERT INTO messages
+		(conversation_id, sender_type, sender_staff_id, body)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id;
+	`
+	tx, err := s.DB.Beginx()
+	if err != nil {
+		return MessageResponse{}, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	var messageId int
+	err = tx.QueryRowx(query, conversationId, message.SenderType, userId, message.Body).Scan(&messageId)
+	if err != nil {
+		return MessageResponse{}, err
+	}
+	if err = tx.Commit(); err != nil {
+		return MessageResponse{}, err
+	}
+
+	var newMessage MessageResponse
+	err = s.DB.Get(&newMessage, "SELECT id, body, sender_type, created_at FROM messages WHERE id = $1;", messageId)
+	if err != nil {
+		return MessageResponse{}, err
+	}
+
+	return newMessage, nil
 }

@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { Layout, List, Avatar, Dropdown, Menu, Empty } from 'ant-design-vue'
 import { Filter, Circle, Clock, CheckCircle, Archive } from 'lucide-vue-next'
 import ChatWindow from '@/components/dash/imbox/ChatWindow.vue'
 import { conversationListAPI } from '@/transport'
@@ -42,12 +41,12 @@ const filterConfig = {
 </script>
 
 <template>
-  <Layout class="imbox-layout">
-    <Layout.Sider width="320" theme="light" class="imbox-sider">
+  <a-layout class="imbox-layout">
+    <a-layout-sider width="320" theme="light" class="imbox-sider">
       <div class="imbox-filter">
         <strong>Inbox</strong>
 
-        <Dropdown trigger="click">
+        <a-dropdown trigger="click">
           <div class="filter-trigger">
             <component :is="filterConfig[activeFilter].icon" size="16" />
             <span>{{ filterConfig[activeFilter].label }}</span>
@@ -55,47 +54,51 @@ const filterConfig = {
           </div>
 
           <template #overlay>
-            <Menu :selectedKeys="[activeFilter]" @click="({ key }) => (activeFilter = key)">
-              <Menu.Item key="open">
+            <a-menu :selectedKeys="[activeFilter]" @click="({ key }) => (activeFilter = key)">
+              <a-menu-item key="open">
                 <div class="menu-item"><Circle size="14" /> Open</div>
-              </Menu.Item>
+              </a-menu-item>
 
-              <Menu.Item key="pending">
+              <a-menu-item key="pending">
                 <div class="menu-item"><Clock size="14" /> Pending</div>
-              </Menu.Item>
+              </a-menu-item>
 
-              <Menu.Item key="resolved">
+              <a-menu-item key="resolved">
                 <div class="menu-item"><CheckCircle size="14" /> Resolved</div>
-              </Menu.Item>
+              </a-menu-item>
 
-              <Menu.Item key="archived">
+              <a-menu-item key="archived">
                 <div class="menu-item"><Archive size="14" /> Archived</div>
-              </Menu.Item>
-            </Menu>
+              </a-menu-item>
+            </a-menu>
           </template>
-        </Dropdown>
+        </a-dropdown>
       </div>
 
-      <List :data-source="conversations" item-layout="horizontal" class="imbox-list">
+      <a-list :data-source="conversations" item-layout="horizontal" class="imbox-list">
         <template #renderItem="{ item }">
-          <List.Item class="imbox-list-item" @click="activeConversationId = item.id">
-            <List.Item.Meta :title="item.customerFullName" :description="item.lastMessage.body">
+          <a-list-item class="imbox-list-item" @click="activeConversationId = item.id">
+            <a-list-item-meta :title="item.customerFullName" :description="item.lastMessage.body">
               <template #avatar>
-                <Avatar>{{ item.customerFullName.charAt(0) }}</Avatar>
+                <a-avatar>
+                  {{ item.customerFullName.charAt(0) }}
+                </a-avatar>
               </template>
-            </List.Item.Meta>
-
-            <!-- <Badge v-if="item.unread" :count="item.unread" /> -->
-          </List.Item>
+            </a-list-item-meta>
+          </a-list-item>
         </template>
-      </List>
-    </Layout.Sider>
+      </a-list>
+    </a-layout-sider>
 
-    <Layout.Content class="imbox-content">
-      <ChatWindow v-if="activeConversationId" :conversation-id="activeConversationId" />
-      <Empty v-else description="Select a conversation" />
-    </Layout.Content>
-  </Layout>
+    <a-layout-content class="imbox-content">
+      <ChatWindow
+        v-if="activeConversationId"
+        :conversationId="activeConversationId"
+        :projectId="parseInt(route.params.projectId)"
+      />
+      <a-empty v-else description="Select a conversation" />
+    </a-layout-content>
+  </a-layout>
 </template>
 
 <style scoped>

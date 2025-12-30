@@ -18,7 +18,13 @@ type ConversationListResponse struct {
 }
 
 type MessageResponse struct {
-	ID         int    `json:"id" db:"id"`
+	ID         int       `json:"id" db:"id"`
+	Body       string    `json:"body" db:"body"`
+	SenderType string    `json:"senderType" db:"sender_type"`
+	CreatedAt  time.Time `json:"createdAt" db:"created_at"`
+}
+
+type MessageRequest struct {
 	Body       string `json:"body" db:"body"`
 	SenderType string `json:"senderType" db:"sender_type"`
 }

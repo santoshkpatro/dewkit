@@ -1,10 +1,15 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Layout, Avatar, Input, Button } from 'ant-design-vue'
 import { Send, User } from 'lucide-vue-next'
+import { conversationMessageListAPI, conversationMessageCreateAPI } from '@/transport'
 
 const props = defineProps({
   conversationId: {
+    type: Number,
+    required: true,
+  },
+  projectId: {
     type: Number,
     required: true,
   },
@@ -22,11 +27,37 @@ const messagesByConversation = {
 const messages = ref(messagesByConversation[props.conversationId] || [])
 const reply = ref('')
 
-const sendReply = () => {
+const sendMessage = async (data) => {
+  await conversationMessageCreateAPI(props.projectId, props.conversationId, data)
+}
+
+const sendReply = async () => {
   if (!reply.value.trim()) return
   messages.value.push({ from: 'agent', text: reply.value })
+
+  const postData = {
+    senderType: 'customer',
+    body: reply.value,
+  }
+  await sendMessage(postData)
   reply.value = ''
 }
+
+const loadMessages = async () => {
+  const { data } = await conversationMessageListAPI(props.projectId, props.conversationId, {})
+}
+
+onMounted(() => {
+  console.log('Call messages: ')
+  loadMessages()
+})
+
+watch(
+  () => props.conversationId,
+  () => {
+    loadMessages()
+  },
+)
 </script>
 
 <template>
