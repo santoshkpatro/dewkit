@@ -98,7 +98,7 @@ func (s *Service) CreateConversationMessage(conversationId int, userId int, mess
 	}()
 
 	var messageId int
-	err = tx.QueryRowx(query, conversationId, message.SenderType, userId, message.Body).Scan(&messageId)
+	err = tx.QueryRowx(query, conversationId, "staff", userId, message.Body).Scan(&messageId)
 	if err != nil {
 		return MessageResponse{}, err
 	}

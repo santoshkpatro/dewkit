@@ -25,8 +25,7 @@ type MessageResponse struct {
 }
 
 type MessageRequest struct {
-	Body       string `json:"body" db:"body"`
-	SenderType string `json:"senderType" db:"sender_type"`
+	Body string `json:"body" db:"body"`
 }
 
 type ConversationMessageResponse struct {

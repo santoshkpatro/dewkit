@@ -1,13 +1,12 @@
 import { ref } from 'vue'
 import { projectImboxWS } from '@/transport'
 
-export function useImboxSocket() {
-  const socket = ref(null)
-  const isConnected = ref(false)
+const socket = ref(null)
+const isConnected = ref(false)
 
-  function connect(projectId) {
-    if (!projectId) return
-    if (socket.value) return
+export function useImboxSocket() {
+  function connect(projectId, onMessage, onClose) {
+    if (!projectId || socket.value) return
 
     socket.value = projectImboxWS(projectId)
 
@@ -16,9 +15,19 @@ export function useImboxSocket() {
       console.log('[WS] Connected:', projectId)
     }
 
+    socket.value.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        onMessage?.(data)
+      } catch (err) {
+        console.error('[WS] Invalid message', err)
+      }
+    }
+
     socket.value.onclose = () => {
       isConnected.value = false
       socket.value = null
+      onClose?.()
       console.log('[WS] Disconnected')
     }
 
@@ -27,9 +36,13 @@ export function useImboxSocket() {
     }
   }
 
+  function send(payload) {
+    if (!socket.value || socket.value.readyState !== WebSocket.OPEN) return
+    socket.value.send(JSON.stringify(payload))
+  }
+
   function disconnect() {
-    if (!socket.value) return
-    socket.value.close()
+    socket.value?.close()
     socket.value = null
   }
 
@@ -37,6 +50,7 @@ export function useImboxSocket() {
     socket,
     isConnected,
     connect,
+    send,
     disconnect,
   }
 }
