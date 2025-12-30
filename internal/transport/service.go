@@ -92,6 +92,25 @@ func (s *Service) NewChatSession(ctx context.Context, chat ChatInitiateRequest) 
 	return &newChatSession, nil
 }
 
+func (s *Service) SendMessage(conversationId int, message MessageRequest) (MessageResponse, error) {
+	var messageId int
+	query := `
+		INSERT INTO messages (conversation_id, sender_type, body) VALUES ($1, $2, $3) RETURNING id;
+	`
+	err := s.DB.QueryRowx(query, conversationId, "customer", message.Body).Scan(&messageId)
+	if err != nil {
+		return MessageResponse{}, err
+	}
+
+	var messageResponse MessageResponse
+	err = s.DB.Get(&messageResponse, "SELECT id, sender_type, body, created_at FROM messages WHERE id = $1", messageId)
+	if err != nil {
+		return messageResponse, err
+	}
+
+	return messageResponse, nil
+}
+
 func (s *Service) GetProjectFromProjectCode(projectCode string) (*Project, error) {
 	project := Project{}
 

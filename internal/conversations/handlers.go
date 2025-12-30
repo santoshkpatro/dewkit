@@ -1,11 +1,15 @@
 package conversations
 
 import (
+	"dewkit/internal/models"
+	"dewkit/internal/utils"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/redis/go-redis/v9"
 )
 
 func ConversationListHandler(c echo.Context) error {
@@ -47,8 +51,9 @@ func ConversationMessageListHandler(c echo.Context) error {
 }
 
 func ConversationMessageCreateHandler(c echo.Context) error {
-	// ctx := c.Request().Context()
-	// cache := c.Get("cache").(*redis.Client)
+	ctx := c.Request().Context()
+	cache := c.Get("cache").(*redis.Client)
+	projectID := c.Get("project_id").(int)
 
 	userId := c.Get("user_id").(int)
 	conversationIDStr := c.Param("conversationId")
@@ -85,6 +90,20 @@ func ConversationMessageCreateHandler(c echo.Context) error {
 			"error": "failed to create message",
 		})
 	}
+
+	conversationMessage := ConversationMessageResponse{
+		ConversationId: conversationID,
+		Message:        newMessage,
+	}
+
+	messageEvent, _ := utils.BuildEvent(models.EventMessageNew, newMessage)
+	conversationMessageEvent, _ := utils.BuildEvent(models.EventMessageNew, conversationMessage)
+
+	imboxChannel := fmt.Sprintf("project:%d:imbox", projectID)
+	conversationChannel := fmt.Sprintf("project:%d:conversation:%d", projectID, conversationID)
+
+	cache.Publish(ctx, conversationChannel, messageEvent)
+	cache.Publish(ctx, imboxChannel, conversationMessageEvent)
 
 	return c.JSON(http.StatusOK, newMessage)
 }

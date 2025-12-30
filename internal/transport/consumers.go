@@ -31,9 +31,8 @@ func ChatConsumer(c echo.Context) error {
 	}
 
 	var chatSession ChatSession
-	err = json.Unmarshal([]byte(sessionVal), &chatSession)
-	if err != nil {
-		return c.JSON(http.StatusNotFound, echo.Map{
+	if err := json.Unmarshal([]byte(sessionVal), &chatSession); err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{
 			"error": "failed to initiate chat.",
 		})
 	}
@@ -44,29 +43,28 @@ func ChatConsumer(c echo.Context) error {
 	}
 	defer ws.Close()
 
-	conversationChannel := fmt.Sprintf("project:%d:conversation:%d", chatSession.ProjectId, chatSession.ConversationId)
-	imboxChannel := fmt.Sprintf("project:%d:imbox", chatSession.ProjectId)
+	conversationChannel := fmt.Sprintf(
+		"project:%d:conversation:%d",
+		chatSession.ProjectId,
+		chatSession.ConversationId,
+	)
 
-	// conversationSub := cache.Subscribe(ctx, conversationChannel)
-	// defer conversationSub.Close()
+	sub := cache.Subscribe(ctx, conversationChannel)
+	defer sub.Close()
 
-	// go func() {
-	// 	for msg := range conversationSub.Channel() {
-	// 		_ = ws.WriteMessage(websocket.TextMessage, []byte(msg.Payload))
-	// 	}
-	// }()
-
+	// Listen and forward Redis → WebSocket
 	for {
-		_, msg, err := ws.ReadMessage()
-		if err != nil {
-			break
+		select {
+		case msg, ok := <-sub.Channel():
+			if !ok {
+				return nil // Redis subscription closed
+			}
+			if err := ws.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
+				return nil // client disconnected
+			}
+
+		case <-ctx.Done():
+			return nil // request cancelled
 		}
-
-		fmt.Println("Msg: ", string(msg))
-
-		cache.Publish(ctx, conversationChannel, msg)
-		cache.Publish(ctx, imboxChannel, msg)
 	}
-
-	return nil
 }

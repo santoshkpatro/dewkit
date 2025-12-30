@@ -28,3 +28,8 @@ type MessageRequest struct {
 	Body       string `json:"body" db:"body"`
 	SenderType string `json:"senderType" db:"sender_type"`
 }
+
+type ConversationMessageResponse struct {
+	ConversationId int             `json:"conversationId"`
+	Message        MessageResponse `json:"message"`
+}
