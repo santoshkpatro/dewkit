@@ -1,69 +1,54 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { Layout, Avatar, Input, Button } from 'ant-design-vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { Send, User } from 'lucide-vue-next'
 import { conversationMessageListAPI, conversationMessageCreateAPI } from '@/transport'
+import { useProjectStore } from '@/stores/project'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps({
-  conversationId: {
-    type: Number,
-    required: true,
-  },
-  projectId: {
-    type: Number,
-    required: true,
-  },
+  conversationId: Number,
+  projectId: Number,
 })
 
-const messagesByConversation = {
-  1: [
-    { from: 'user', text: 'I need help with my subscription' },
-    { from: 'agent', text: 'Sure — what plan are you on?' },
-  ],
-  2: [{ from: 'user', text: 'Thanks for resolving this!' }],
-  3: [{ from: 'user', text: 'Can you reset my password?' }],
-}
+const projectStore = useProjectStore()
+const { activeChatMessages, activeConversationId } = storeToRefs(projectStore)
 
-const messages = ref(messagesByConversation[props.conversationId] || [])
 const reply = ref('')
-
-const sendMessage = async (data) => {
-  await conversationMessageCreateAPI(props.projectId, props.conversationId, data)
-}
-
-const sendReply = async () => {
-  if (!reply.value.trim()) return
-  messages.value.push({ from: 'agent', text: reply.value })
-
-  const postData = {
-    senderType: 'customer',
-    body: reply.value,
-  }
-  await sendMessage(postData)
-  reply.value = ''
-}
 
 const loadMessages = async () => {
   const { data } = await conversationMessageListAPI(props.projectId, props.conversationId, {})
+
+  projectStore.setActiveChatMessages(data)
+}
+
+const conversation = computed(() => {
+  return projectStore.conversations.find((c) => c.id === props.conversationId)
+})
+
+const sendReply = async () => {
+  if (!reply.value.trim()) return
+
+  const postData = {
+    senderType: 'staff',
+    body: reply.value,
+  }
+
+  reply.value = ''
+  await conversationMessageCreateAPI(props.projectId, props.conversationId, postData)
 }
 
 onMounted(() => {
-  console.log('Call messages: ')
+  projectStore.setActiveConversation(props.conversationId)
   loadMessages()
 })
 
-watch(
-  () => props.conversationId,
-  () => {
-    loadMessages()
-  },
-)
+watch(() => props.conversationId, loadMessages)
 </script>
 
 <template>
-  <Layout style="height: 100%">
+  <a-layout style="height: 100%">
     <!-- Header -->
-    <Layout.Header
+    <a-layout-header
       style="
         background: none;
         border-bottom: 1px solid #f0f0f0;
@@ -72,37 +57,43 @@ watch(
         gap: 8px;
       "
     >
-      <Avatar>
+      <a-avatar>
         <User size="16" />
-      </Avatar>
-      <strong>Conversation #{{ conversationId }}</strong>
-    </Layout.Header>
+      </a-avatar>
+      <strong>{{ conversation.customerFullName }}</strong>
+    </a-layout-header>
 
     <!-- Messages -->
-    <Layout.Content style="padding: 16px; overflow-y: auto">
+    <a-layout-content style="padding: 16px; overflow-y: auto">
       <div
-        v-for="(msg, index) in messages"
-        :key="index"
+        v-for="msg in activeChatMessages"
+        :key="msg.id"
         :style="{
           display: 'flex',
-          justifyContent: msg.from === 'agent' ? 'flex-end' : 'flex-start',
+          justifyContent: msg.senderType === 'staff' ? 'flex-end' : 'flex-start',
           marginBottom: '8px',
         }"
       >
         <div
-          style="max-width: 70%; padding: 8px 12px; border: 1px solid #f0f0f0; border-radius: 8px"
+          :style="{
+            maxWidth: '70%',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            background: msg.senderType === 'staff' ? '#e6f4ff' : '#fafafa',
+            border: '1px solid #f0f0f0',
+          }"
         >
-          {{ msg.text }}
+          {{ msg.body }}
         </div>
       </div>
-    </Layout.Content>
+    </a-layout-content>
 
     <!-- Reply box -->
-    <Layout.Footer style="border-top: 1px solid #f0f0f0; padding: 12px; display: flex; gap: 8px">
-      <Input v-model:value="reply" placeholder="Reply as support…" @pressEnter="sendReply" />
-      <Button type="primary" @click="sendReply">
+    <a-layout-footer style="border-top: 1px solid #f0f0f0; padding: 12px; display: flex; gap: 8px">
+      <a-input v-model:value="reply" placeholder="Reply as support…" @pressEnter="sendReply" />
+      <a-button type="primary" @click="sendReply">
         <Send size="16" />
-      </Button>
-    </Layout.Footer>
-  </Layout>
+      </a-button>
+    </a-layout-footer>
+  </a-layout>
 </template>
