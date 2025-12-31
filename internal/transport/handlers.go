@@ -87,8 +87,8 @@ func ChatMessageSend(c echo.Context) error {
 	messageEvent, _ := utils.BuildEvent(models.EventMessageNew, newMessage)
 	conversationMessageEvent, _ := utils.BuildEvent(models.EventMessageNew, conversationMessage)
 
-	imboxChannel := fmt.Sprintf("project:%d:imbox", chatSession.ProjectId)
-	conversationChannel := fmt.Sprintf("project:%d:conversation:%d", chatSession.ProjectId, chatSession.ConversationId)
+	imboxChannel := fmt.Sprintf("project:%s:imbox", chatSession.ProjectId)
+	conversationChannel := fmt.Sprintf("project:%s:conversation:%s", chatSession.ProjectId, chatSession.ConversationId)
 
 	cache.Publish(ctx, conversationChannel, messageEvent)
 	cache.Publish(ctx, imboxChannel, conversationMessageEvent)

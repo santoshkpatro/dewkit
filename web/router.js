@@ -45,6 +45,7 @@ const router = createRouter({
     {
       path: '',
       component: IndexView,
+      name: 'index',
       meta: { requiresAuth: true },
     },
   ],

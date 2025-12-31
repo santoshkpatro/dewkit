@@ -8,7 +8,7 @@ var V1 = Migration{
 	Up: func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(`
 			CREATE TABLE users (
-				id BIGSERIAL PRIMARY KEY,
+				id TEXT PRIMARY KEY,
 				email TEXT NOT NULL UNIQUE,
 				full_name TEXT NOT NULL,
 				password_hash TEXT NOT NULL,

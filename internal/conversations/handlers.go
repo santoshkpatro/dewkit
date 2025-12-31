@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 )
 
 func ConversationListHandler(c echo.Context) error {
-	projectID := c.Get("project_id").(int)
+	projectID := c.Get("project_id").(string)
 	status := c.QueryParam("status")
 
 	service := NewService()
@@ -30,13 +29,7 @@ func ConversationListHandler(c echo.Context) error {
 
 func ConversationMessageListHandler(c echo.Context) error {
 	// projectID := c.Get("project_id").(int)
-	conversationIDStr := c.Param("conversationId")
-	conversationID, err := strconv.Atoi(conversationIDStr)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "invalid conversationId",
-		})
-	}
+	conversationID := c.Param("conversationId")
 
 	service := NewService()
 	messages, err := service.ConversationMessages(conversationID)
@@ -53,16 +46,16 @@ func ConversationMessageListHandler(c echo.Context) error {
 func ConversationMessageCreateHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 	cache := c.Get("cache").(*redis.Client)
-	projectID := c.Get("project_id").(int)
+	projectID := c.Get("project_id")
 
-	userId := c.Get("user_id").(int)
-	conversationIDStr := c.Param("conversationId")
-	conversationID, err := strconv.Atoi(conversationIDStr)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "invalid conversationId",
-		})
-	}
+	userId := c.Get("user_id").(string)
+	conversationID := c.Param("conversationId")
+	// conversationID, err := strconv.Atoi(conversationIDStr)
+	// if err != nil {
+	// 	return c.JSON(http.StatusBadRequest, map[string]string{
+	// 		"error": "invalid conversationId",
+	// 	})
+	// }
 	var req MessageRequest
 
 	if err := c.Bind(&req); err != nil {
@@ -99,8 +92,8 @@ func ConversationMessageCreateHandler(c echo.Context) error {
 	messageEvent, _ := utils.BuildEvent(models.EventMessageNew, newMessage)
 	conversationMessageEvent, _ := utils.BuildEvent(models.EventMessageNew, conversationMessage)
 
-	imboxChannel := fmt.Sprintf("project:%d:imbox", projectID)
-	conversationChannel := fmt.Sprintf("project:%d:conversation:%d", projectID, conversationID)
+	imboxChannel := fmt.Sprintf("project:%s:imbox", projectID)
+	conversationChannel := fmt.Sprintf("project:%s:conversation:%s", projectID, conversationID)
 
 	cache.Publish(ctx, conversationChannel, messageEvent)
 	cache.Publish(ctx, imboxChannel, conversationMessageEvent)

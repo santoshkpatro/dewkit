@@ -3,6 +3,7 @@ package transport
 import (
 	"context"
 	"dewkit/config"
+	"dewkit/internal/utils"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -40,25 +41,26 @@ func (s *Service) NewChatSession(ctx context.Context, chat ChatInitiateRequest) 
 		}
 	}()
 
-	var conversationId int
+	var conversationId string
 	conversationQuery := `
 		INSERT INTO 
-		conversations (customer_email, customer_full_name, status, project_id) 
-		VALUES ($1, $2, $3, $4)
+		conversations (id, customer_email, customer_full_name, status, project_id) 
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id
 	`
-	err = tx.QueryRow(conversationQuery, chat.CustomerEmail, chat.CustomerFullName, "open", project.ID).Scan(&conversationId)
+	err = tx.QueryRow(conversationQuery, utils.NewID("cnv"), chat.CustomerEmail, chat.CustomerFullName, "open", project.ID).Scan(&conversationId)
 	if err != nil {
 		return nil, err
 	}
 	messageQuery := `
 		INSERT INTO messages
-			(conversation_id, sender_type, body)
-		VALUES ($1, $2, $3)
+			(id, conversation_id, sender_type, body)
+		VALUES ($1, $2, $3, $4)
 	`
 	_, err = tx.ExecContext(
 		ctx,
 		messageQuery,
+		utils.NewID("msg"),
 		conversationId,
 		"customer",
 		chat.Message,
@@ -92,12 +94,12 @@ func (s *Service) NewChatSession(ctx context.Context, chat ChatInitiateRequest) 
 	return &newChatSession, nil
 }
 
-func (s *Service) SendMessage(conversationId int, message MessageRequest) (MessageResponse, error) {
-	var messageId int
+func (s *Service) SendMessage(conversationId string, message MessageRequest) (MessageResponse, error) {
+	var messageId string
 	query := `
-		INSERT INTO messages (conversation_id, sender_type, body) VALUES ($1, $2, $3) RETURNING id;
+		INSERT INTO messages (id, conversation_id, sender_type, body) VALUES ($1, $2, $3, $4) RETURNING id;
 	`
-	err := s.DB.QueryRowx(query, conversationId, "customer", message.Body).Scan(&messageId)
+	err := s.DB.QueryRowx(query, utils.NewID("msg"), conversationId, "customer", message.Body).Scan(&messageId)
 	if err != nil {
 		return MessageResponse{}, err
 	}

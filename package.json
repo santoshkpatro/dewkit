@@ -16,6 +16,8 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.2.4",
+    "@dicebear/core": "^9.2.4",
     "ant-design-vue": "~4.2.6",
     "axios": "^1.13.2",
     "lucide-vue-next": "^0.562.0",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.2",
+    "concurrently": "^9.2.1",
     "prettier": "3.6.2",
     "unplugin-fonts": "^1.4.0",
     "unplugin-vue-components": "^30.0.0",

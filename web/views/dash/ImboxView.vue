@@ -94,7 +94,7 @@ const filterConfig = {
       <ChatWindow
         v-if="activeConversationId"
         :conversationId="activeConversationId"
-        :projectId="parseInt(route.params.projectId)"
+        :projectId="route.params.projectId"
       />
       <a-empty v-else description="Select a conversation" />
     </a-layout-content>

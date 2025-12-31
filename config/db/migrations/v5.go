@@ -5,16 +5,15 @@ import "github.com/jmoiron/sqlx"
 var V5 = Migration{
 	Version: 5,
 	Up: func(tx *sqlx.Tx) error {
-		_, err := tx.Exec(
-			`
+		_, err := tx.Exec(`
 			CREATE TYPE project_member_role AS ENUM ('admin', 'collaborator');
 
 			CREATE TABLE projects (
-				id BIGSERIAL PRIMARY KEY,
+				id TEXT PRIMARY KEY,
 				name TEXT NOT NULL,
 				description TEXT,
 				code TEXT NOT NULL UNIQUE,
-				created_by_id BIGINT NOT NULL,
+				created_by_id TEXT NOT NULL,
 				created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
@@ -25,9 +24,9 @@ var V5 = Migration{
 			);
 
 			CREATE TABLE project_members (
-				id BIGSERIAL PRIMARY KEY,
-				project_id BIGINT NOT NULL,
-				user_id BIGINT NOT NULL,
+				id TEXT PRIMARY KEY,
+				project_id TEXT NOT NULL,
+				user_id TEXT NOT NULL,
 				role project_member_role NOT NULL,
 				created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -47,20 +46,17 @@ var V5 = Migration{
 			);
 
 			ALTER TABLE conversations
-			ALTER COLUMN id TYPE BIGINT;
-
-			ALTER TABLE conversations
-			ADD COLUMN project_id BIGINT;
+			ADD COLUMN project_id TEXT;
 
 			ALTER TABLE conversations
 			ADD CONSTRAINT fk_conversations_project
 				FOREIGN KEY (project_id)
 				REFERENCES projects(id)
 				ON DELETE SET NULL;
-			`,
-		)
+	`)
 		return err
 	},
+
 	Down: func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(
 			`
@@ -69,9 +65,6 @@ var V5 = Migration{
 
 			ALTER TABLE conversations
 			DROP COLUMN IF EXISTS project_id;
-
-			ALTER TABLE conversations
-			ALTER COLUMN id TYPE INTEGER;
 
 			DROP TABLE IF EXISTS project_members;
 			DROP TABLE IF EXISTS projects;

@@ -8,7 +8,7 @@ type ProjectCreateRequest struct {
 }
 
 type ProjectListResponse struct {
-	ID          int       `json:"id" db:"id"`
+	ID          string    `json:"id" db:"id"`
 	Name        string    `json:"name" db:"name"`
 	Description *string   `json:"description" db:"description"`
 	Code        string    `json:"code" db:"code"`
@@ -17,7 +17,7 @@ type ProjectListResponse struct {
 }
 
 type ProjectMemberResponse struct {
-	ID       int    `json:"id" db:"id"`
+	ID       string `json:"id" db:"id"`
 	Email    string `json:"email" db:"email"`
 	FullName string `json:"fullName" db:"full_name"`
 	Role     string `json:"role" db:"role"`

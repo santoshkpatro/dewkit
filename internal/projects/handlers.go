@@ -9,7 +9,7 @@ import (
 )
 
 func ProjectCreateHandler(c echo.Context) error {
-	userID := c.Get("user_id").(int)
+	userID := c.Get("user_id").(string)
 	var req ProjectCreateRequest
 
 	if err := c.Bind(&req); err != nil {
@@ -55,7 +55,7 @@ func ProjectCreateHandler(c echo.Context) error {
 }
 
 func ProjectListHandler(c echo.Context) error {
-	userID := c.Get("user_id").(int)
+	userID := c.Get("user_id").(string)
 	db := c.Get("db").(*sqlx.DB)
 
 	query := `
@@ -90,8 +90,8 @@ func ProjectListHandler(c echo.Context) error {
 func ProjectMembersHandler(c echo.Context) error {
 	// ctx := c.Request().Context()
 
-	userID := c.Get("user_id").(int)
-	projectID := c.Get("project_id").(int)
+	userID := c.Get("user_id").(string)
+	projectID := c.Get("project_id").(string)
 	// cache := c.Get("cache").(*redis.Client)
 
 	service := NewService()

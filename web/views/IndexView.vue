@@ -21,7 +21,7 @@ onMounted(async () => {
     return
   }
 
-  const currentProjectId = parseInt(localStorage.getItem('currentProject'))
+  const currentProjectId = localStorage.getItem('currentProject')
   const currentProject = projects.find((p) => p.id === currentProjectId)
 
   if (!currentProject) {

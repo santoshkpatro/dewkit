@@ -2,6 +2,7 @@ package projects
 
 import (
 	"dewkit/config"
+	"dewkit/internal/utils"
 	"fmt"
 	"strings"
 
@@ -21,7 +22,7 @@ func NewService() *Service {
 	return &Service{DB: db, Cache: cache}
 }
 
-func (s *Service) CreateProject(ownerId int, data ProjectCreateRequest) (ProjectListResponse, error) {
+func (s *Service) CreateProject(ownerId string, data ProjectCreateRequest) (ProjectListResponse, error) {
 
 	tx, err := s.DB.Beginx()
 	if err != nil {
@@ -34,16 +35,17 @@ func (s *Service) CreateProject(ownerId int, data ProjectCreateRequest) (Project
 		}
 	}()
 
-	var projectID int
+	var projectID string
 
 	insertProjectQuery := `
-		INSERT INTO projects (name, description, code, created_by_id)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO projects (id, name, description, code, created_by_id)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id;
 	`
 
 	err = tx.QueryRowx(
 		insertProjectQuery,
+		utils.NewID("prj"),
 		data.Name,
 		data.Description,
 		generateProjectCode(),
@@ -55,11 +57,11 @@ func (s *Service) CreateProject(ownerId int, data ProjectCreateRequest) (Project
 	}
 
 	insertMemberQuery := `
-		INSERT INTO project_members (project_id, user_id, role)
-		VALUES ($1, $2, 'admin');
+		INSERT INTO project_members (id, project_id, user_id, role)
+		VALUES ($1, $2, $3, 'admin');
 	`
 
-	_, err = tx.Exec(insertMemberQuery, projectID, ownerId)
+	_, err = tx.Exec(insertMemberQuery, utils.NewID("prjmem"), projectID, ownerId)
 	if err != nil {
 		return ProjectListResponse{}, err
 	}
@@ -72,7 +74,7 @@ func (s *Service) CreateProject(ownerId int, data ProjectCreateRequest) (Project
 	return s.GetProjectResponse(ownerId, projectID)
 }
 
-func (s *Service) GetProjectResponse(userId int, projectId int) (ProjectListResponse, error) {
+func (s *Service) GetProjectResponse(userId string, projectId string) (ProjectListResponse, error) {
 
 	query := `
 		SELECT
@@ -125,7 +127,7 @@ func generateProjectCode() string {
 	)
 }
 
-func (s *Service) ListMembers(projectId int, currentUserID *int) ([]ProjectMemberResponse, error) {
+func (s *Service) ListMembers(projectId string, currentUserID *string) ([]ProjectMemberResponse, error) {
 	baseQuery := `
 		SELECT 
 			pm.id, 

@@ -2,6 +2,7 @@ package conversations
 
 import (
 	"dewkit/config"
+	"dewkit/internal/utils"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
@@ -18,7 +19,7 @@ func NewService() *Service {
 	return &Service{DB: db, Cache: cache}
 }
 
-func (s *Service) ListActiveConversations(projectId int, status string) ([]ConversationListResponse, error) {
+func (s *Service) ListActiveConversations(projectId string, status string) ([]ConversationListResponse, error) {
 	query := `
 		SELECT *
 		FROM (
@@ -57,7 +58,7 @@ func (s *Service) ListActiveConversations(projectId int, status string) ([]Conve
 	return conversations, nil
 }
 
-func (s *Service) ConversationMessages(conversationId int) ([]MessageResponse, error) {
+func (s *Service) ConversationMessages(conversationId string) ([]MessageResponse, error) {
 	query := `
 		SELECT 
 			m.id,
@@ -80,11 +81,11 @@ func (s *Service) ConversationMessages(conversationId int) ([]MessageResponse, e
 
 }
 
-func (s *Service) CreateConversationMessage(conversationId int, userId int, message MessageRequest) (MessageResponse, error) {
+func (s *Service) CreateConversationMessage(conversationId string, userId string, message MessageRequest) (MessageResponse, error) {
 	query := `
 		INSERT INTO messages
-		(conversation_id, sender_type, sender_staff_id, body)
-		VALUES ($1, $2, $3, $4)
+		(id, conversation_id, sender_type, sender_staff_id, body)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id;
 	`
 	tx, err := s.DB.Beginx()
@@ -97,8 +98,8 @@ func (s *Service) CreateConversationMessage(conversationId int, userId int, mess
 		}
 	}()
 
-	var messageId int
-	err = tx.QueryRowx(query, conversationId, "staff", userId, message.Body).Scan(&messageId)
+	var messageId string
+	err = tx.QueryRowx(query, utils.NewID("msg"), conversationId, "staff", userId, message.Body).Scan(&messageId)
 	if err != nil {
 		return MessageResponse{}, err
 	}
