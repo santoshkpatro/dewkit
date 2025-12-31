@@ -9,12 +9,12 @@ var V8 = Migration{
 			`
 			CREATE TYPE sender_type_enum AS ENUM ('customer', 'staff', 'system');
 			CREATE TABLE messages (
-				id BIGSERIAL PRIMARY KEY,
+				id TEXT PRIMARY KEY,
 
-				conversation_id BIGINT NOT NULL,
+				conversation_id TEXT NOT NULL,
 				sender_type sender_type_enum NOT NULL,
-				sender_customer_id BIGINT NULL,
-  				sender_staff_id BIGINT NULL,
+				sender_customer_id TEXT NULL,
+  				sender_staff_id TEXT NULL,
 
 				body TEXT NOT NULL,
 				body_type VARCHAR(20) DEFAULT 'text',

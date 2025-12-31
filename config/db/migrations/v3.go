@@ -15,14 +15,14 @@ var V3 = Migration{
 			);
 
 			CREATE TABLE conversations (
-				id SERIAL PRIMARY KEY,
-				customer_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+				id TEXT PRIMARY KEY,
+				customer_id TEXT REFERENCES users(id) ON DELETE SET NULL,
 				customer_full_name TEXT,
 				customer_email TEXT,
 				status TEXT NOT NULL,
 				resolved_at TIMESTAMPTZ,
 				archived_at TIMESTAMPTZ,
-				assigned_to BIGINT REFERENCES users(id) ON DELETE SET NULL,
+				assigned_to TEXT REFERENCES users(id) ON DELETE SET NULL,
 
 				created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

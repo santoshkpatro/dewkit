@@ -3,13 +3,13 @@ package conversations
 import "time"
 
 type LastMessageResponse struct {
-	ID        int       `db:"last_message_id" json:"id"`
+	ID        string    `db:"last_message_id" json:"id"`
 	Body      string    `db:"last_message_body" json:"body"`
 	CreatedAt time.Time `db:"last_message_created_at" json:"createdAt"`
 }
 
 type ConversationListResponse struct {
-	ID               int                 `db:"id" json:"id"`
+	ID               string              `db:"id" json:"id"`
 	Status           string              `db:"status" json:"status"`
 	CustomerEmail    string              `db:"customer_email" json:"customerEmail"`
 	CustomerFullName string              `db:"customer_full_name" json:"customerFullName"`
@@ -18,7 +18,7 @@ type ConversationListResponse struct {
 }
 
 type MessageResponse struct {
-	ID         int       `json:"id" db:"id"`
+	ID         string    `json:"id" db:"id"`
 	Body       string    `json:"body" db:"body"`
 	SenderType string    `json:"senderType" db:"sender_type"`
 	CreatedAt  time.Time `json:"createdAt" db:"created_at"`
@@ -29,6 +29,6 @@ type MessageRequest struct {
 }
 
 type ConversationMessageResponse struct {
-	ConversationId int             `json:"conversationId"`
+	ConversationId string          `json:"conversationId"`
 	Message        MessageResponse `json:"message"`
 }

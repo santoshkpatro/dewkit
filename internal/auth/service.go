@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"dewkit/config"
+	"dewkit/internal/utils"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -76,8 +77,9 @@ func (s *Service) CreateSuperuser(
 
 	// 4. Insert superuser
 	_, err = s.DB.Exec(
-		`INSERT INTO users (full_name, email, password_hash, password_salt, role)
-		 VALUES ($1, $2, $3, $4, 'superuser')`,
+		`INSERT INTO users (id, full_name, email, password_hash, password_salt, role)
+		 VALUES ($1, $2, $3, $4, $5, 'superuser')`,
+		utils.NewID("usr"),
 		fullName,
 		email,
 		passwordHash,

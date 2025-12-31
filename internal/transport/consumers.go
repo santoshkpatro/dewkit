@@ -44,7 +44,7 @@ func ChatConsumer(c echo.Context) error {
 	defer ws.Close()
 
 	conversationChannel := fmt.Sprintf(
-		"project:%d:conversation:%d",
+		"project:%s:conversation:%s",
 		chatSession.ProjectId,
 		chatSession.ConversationId,
 	)

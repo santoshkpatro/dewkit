@@ -10,9 +10,9 @@ type ChatInitiateRequest struct {
 }
 
 type ChatSession struct {
-	ProjectId      int       `json:"projectId"`
+	ProjectId      string    `json:"projectId"`
 	SessionId      string    `json:"sessionId"`
-	ConversationId int       `json:"conversationId"`
+	ConversationId string    `json:"conversationId"`
 	ExpiresAt      time.Time `json:"expiresAt"`
 }
 
@@ -21,13 +21,13 @@ type MessageRequest struct {
 }
 
 type MessageResponse struct {
-	ID         int       `json:"id" db:"id"`
+	ID         string    `json:"id" db:"id"`
 	Body       string    `json:"body" db:"body"`
 	SenderType string    `json:"senderType" db:"sender_type"`
 	CreatedAt  time.Time `json:"createdAt" db:"created_at"`
 }
 
 type ConversationMessageResponse struct {
-	ConversationId int             `json:"conversationId"`
+	ConversationId string          `json:"conversationId"`
 	Message        MessageResponse `json:"message"`
 }

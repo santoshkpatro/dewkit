@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
 const form = reactive({
   email: '',
   password: '',
@@ -18,9 +19,9 @@ const submit = async () => {
     const loginResp = await authLoginAPI(form)
     authStore.loginUser(loginResp.data)
 
-    const projectsResp = await projectListAPI()
+    // const projectsResp = await projectListAPI()
 
-    // router.push({ name: 'imbox' })
+    router.push({ name: 'index' })
   } catch (error) {
     console.log('Error', error)
   }

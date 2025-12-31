@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"dewkit/config"
 	"net/http"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -14,7 +13,7 @@ func ProjectPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		db := config.DB
 
 		// 1️⃣ Extract user ID from context
-		userID, ok := c.Get("user_id").(int)
+		userID, ok := c.Get("user_id").(string)
 		if !ok {
 			return echo.NewHTTPError(
 				http.StatusUnauthorized,
@@ -23,14 +22,7 @@ func ProjectPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		// 2️⃣ Extract project ID from URL
-		projectIDParam := c.Param("projectId")
-		projectID, err := strconv.Atoi(projectIDParam)
-		if err != nil {
-			return echo.NewHTTPError(
-				http.StatusBadRequest,
-				"Invalid project identifier",
-			)
-		}
+		projectID := c.Param("projectId")
 
 		// 3️⃣ Query membership + role
 		var role string
@@ -40,7 +32,7 @@ func ProjectPermissionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 				WHERE project_id = $1 AND user_id = $2;
 			`
 
-		err = db.Get(&role, query, projectID, userID)
+		err := db.Get(&role, query, projectID, userID)
 		if err == sql.ErrNoRows {
 			return echo.NewHTTPError(
 				http.StatusForbidden,

@@ -97,7 +97,7 @@ func LoginHandler(c echo.Context) error {
 }
 
 func ProfileHandler(c echo.Context) error {
-	userID := c.Get("user_id").(int)
+	userID := c.Get("user_id").(string)
 	db := c.Get("db").(*sqlx.DB)
 
 	var user LoggedInUserResponse
@@ -161,9 +161,9 @@ func MetaHandler(c echo.Context) error {
 		slog.Error("failed to get session in meta", "err", err)
 	} else {
 		authenticated, _ := sess.Values["authenticated"].(bool)
-		userID, _ := sess.Values["user_id"].(int)
+		userID, _ := sess.Values["user_id"].(string)
 
-		if authenticated && userID > 0 {
+		if authenticated {
 			var user LoggedInUserResponse
 			if err := db.Get(
 				&user,
