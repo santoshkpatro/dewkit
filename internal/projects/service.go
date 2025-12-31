@@ -4,9 +4,7 @@ import (
 	"dewkit/config"
 	"dewkit/internal/utils"
 	"fmt"
-	"strings"
 
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
 )
@@ -38,8 +36,8 @@ func (s *Service) CreateProject(ownerId string, data ProjectCreateRequest) (Proj
 	var projectID string
 
 	insertProjectQuery := `
-		INSERT INTO projects (id, name, description, code, created_by_id)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO projects (id, name, description, created_by_id)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id;
 	`
 
@@ -48,7 +46,6 @@ func (s *Service) CreateProject(ownerId string, data ProjectCreateRequest) (Proj
 		utils.NewID("prj"),
 		data.Name,
 		data.Description,
-		generateProjectCode(),
 		ownerId,
 	).Scan(&projectID)
 
@@ -81,7 +78,6 @@ func (s *Service) GetProjectResponse(userId string, projectId string) (ProjectLi
 			p.id,
 			p.name,
 			p.description,
-			p.code,
 			pm.role AS member_role,
 			p.created_at
 		FROM project_members pm
@@ -119,12 +115,6 @@ func (s *Service) ListUserProjects(userId int) ([]ProjectListResponse, error) {
 	}
 
 	return projects, nil
-}
-
-func generateProjectCode() string {
-	return strings.ToUpper(
-		strings.ReplaceAll(uuid.New().String(), "-", ""),
-	)
 }
 
 func (s *Service) ListMembers(projectId string, currentUserID *string) ([]ProjectMemberResponse, error) {

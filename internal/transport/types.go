@@ -2,8 +2,13 @@ package transport
 
 import "time"
 
+type Project struct {
+	ID   string `db:"id"`
+	Name string `db:"name"`
+}
+
 type ChatInitiateRequest struct {
-	ProjectCode      string `json:"projectCode"`
+	ProjectId        string `json:"projectId"`
 	CustomerEmail    string `json:"customerEmail"`
 	CustomerFullName string `json:"customerFullName"`
 	Message          string `json:"message"`

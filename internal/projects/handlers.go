@@ -63,7 +63,6 @@ func ProjectListHandler(c echo.Context) error {
 			p.id,
 			p.name,
 			p.description,
-			p.code,
 			pm.role as member_role,
 			p.created_at
 		FROM project_members pm

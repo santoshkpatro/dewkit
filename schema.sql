@@ -64,7 +64,6 @@ CREATE TABLE projects (
     id text NOT NULL,
     name text NOT NULL,
     description text,
-    code text NOT NULL,
     created_by_id text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
@@ -104,9 +103,6 @@ ALTER TABLE ONLY project_members
 
 ALTER TABLE ONLY project_members
     ADD CONSTRAINT project_members_unique UNIQUE (project_id, user_id);
-
-ALTER TABLE ONLY projects
-    ADD CONSTRAINT projects_code_key UNIQUE (code);
 
 ALTER TABLE ONLY projects
     ADD CONSTRAINT projects_name_unique UNIQUE (name);
@@ -167,5 +163,5 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 -- Ensure db.version is set to latest migration
 UPDATE settings
-SET value = to_jsonb(8::int)
+SET value = to_jsonb(9::int)
 WHERE key = 'db.version';

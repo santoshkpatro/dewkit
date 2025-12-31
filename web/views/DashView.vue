@@ -146,7 +146,7 @@ onMounted(async () => {
           <Boxes :size="18" />
           <div class="project">
             <span class="project-name">{{ currentProject.name }}</span>
-            <span class="project-id">{{ currentProject.code }}</span>
+            <span class="project-id">{{ currentProject.id }}</span>
           </div>
         </div>
 

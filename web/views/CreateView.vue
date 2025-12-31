@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { User, FileText } from 'lucide-vue-next'
 import { projectCreateAPI } from '@/transport'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const formState = ref({
   name: '',
@@ -14,9 +17,8 @@ const rules = {
 }
 
 const submitForm = async () => {
-  console.log(formState.value)
   const { data } = await projectCreateAPI(formState.value)
-  console.log('Data: ', data)
+  router.push({ name: 'imbox', params: { projectId: data.id } })
 }
 </script>
 

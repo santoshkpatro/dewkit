@@ -26,7 +26,7 @@ func NewService() *Service {
 }
 
 func (s *Service) NewChatSession(ctx context.Context, chat ChatInitiateRequest) (*ChatSession, error) {
-	project, err := s.GetProjectFromProjectCode(chat.ProjectCode)
+	project, err := s.GetProjectFromProjectId(chat.ProjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -113,13 +113,13 @@ func (s *Service) SendMessage(conversationId string, message MessageRequest) (Me
 	return messageResponse, nil
 }
 
-func (s *Service) GetProjectFromProjectCode(projectCode string) (*Project, error) {
+func (s *Service) GetProjectFromProjectId(projectId string) (*Project, error) {
 	project := Project{}
 
 	query := `
-		SELECT id, name, code FROM projects WHERE code = $1
+		SELECT id, name FROM projects WHERE id = $1
 	`
-	err := s.DB.Get(&project, query, projectCode)
+	err := s.DB.Get(&project, query, projectId)
 	if err != nil {
 		return nil, err
 	}
