@@ -20,4 +20,5 @@ var All = []Migration{
 	V7,
 	V8,
 	V9,
+	V10,
 }

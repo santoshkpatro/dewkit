@@ -1,5 +1,7 @@
 
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
 CREATE TYPE conversation_status AS ENUM (
     'open',
     'pending',
@@ -23,6 +25,58 @@ CREATE TYPE user_role AS ENUM (
     'staff',
     'superuser'
 );
+
+CREATE FUNCTION newid(prefix text) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+			DECLARE
+			    crockford text := '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+			    
+			    time_ms   bigint;
+			    time_bits bit(48);
+
+			    
+			    rand_bytes bytea;
+			    rand_bits_text text := '';
+			    rand_bits bit(80);
+
+			    
+			    ulid_bits bit(128);
+			    result_ulid text := '';
+
+			    i int;
+			    idx int;
+			BEGIN
+			    
+			    time_ms := FLOOR(EXTRACT(EPOCH FROM clock_timestamp()) * 1000);
+			    time_bits := time_ms::bit(48);
+
+			    
+			    rand_bytes := gen_random_bytes(10);
+
+			    
+			    FOR i IN 0..9 LOOP
+			        rand_bits_text :=
+			            rand_bits_text ||
+			            (get_byte(rand_bytes, i)::bit(8))::text;
+			    END LOOP;
+
+			    rand_bits := rand_bits_text::bit(80);
+
+			    
+			    ulid_bits := time_bits || rand_bits;
+
+			    
+			    FOR i IN 0..25 LOOP
+			        idx := substring(ulid_bits FROM i * 5 + 1 FOR 5)::int;
+			        result_ulid := result_ulid || substr(crockford, idx + 1, 1);
+			    END LOOP;
+
+			    
+			    RETURN prefix || '_' || lower(result_ulid);
+			END;
+			$$;
 
 CREATE TABLE conversations (
     id text NOT NULL,
@@ -163,5 +217,5 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 -- Ensure db.version is set to latest migration
 UPDATE settings
-SET value = to_jsonb(9::int)
+SET value = to_jsonb(10::int)
 WHERE key = 'db.version';
