@@ -27,7 +27,7 @@ const authStore = useAuthStore()
 const projectStore = useProjectStore()
 
 const { settings, loggedInUser } = storeToRefs(authStore)
-const { currentProject, members } = storeToRefs(projectStore)
+const { currentProject, members, projects } = storeToRefs(projectStore)
 
 const user = ref({
   name: 'John Doe',
@@ -70,6 +70,18 @@ const loadMembers = async () => {
       online: false,
     })),
   )
+}
+
+function onProjectChange(projectId) {
+  const project = projects.value.find((p) => p.id === projectId)
+  if (!project) return
+
+  projectStore.setCurrentProject(project)
+
+  router.push({
+    name: activeRouteName.value,
+    params: { projectId },
+  })
 }
 
 onMounted(async () => {
@@ -144,10 +156,19 @@ onMounted(async () => {
       <header class="topbar">
         <div class="top-left">
           <Boxes :size="18" />
-          <div class="project">
-            <span class="project-name">{{ currentProject.name }}</span>
-            <span class="project-id">{{ currentProject.id }}</span>
-          </div>
+          <a-select
+            class="project-select"
+            :value="currentProject.id"
+            @change="onProjectChange"
+            dropdown-class-name="project-select-dropdown"
+          >
+            <a-select-option v-for="project in projects" :key="project.id" :value="project.id">
+              <div class="project-option">
+                <div class="project-name">{{ project.name }}</div>
+                <div class="project-id">{{ project.id }}</div>
+              </div>
+            </a-select-option>
+          </a-select>
         </div>
 
         <div class="top-right">
@@ -163,7 +184,7 @@ onMounted(async () => {
       </header>
 
       <main class="content">
-        <RouterView />
+        <RouterView :key="route.params.projectId" />
       </main>
     </div>
   </div>
