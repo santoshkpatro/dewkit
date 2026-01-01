@@ -19,6 +19,7 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { useProjectStore } from '@/stores/project'
 import { projectListAPI, projectMembersAPI } from '@/transport'
+import { generateAvatarDataURI } from '@/utils/generators'
 
 const router = useRouter()
 const route = useRoute()
@@ -66,7 +67,7 @@ const loadMembers = async () => {
   projectStore.setMembers(
     data.map((m) => ({
       ...m,
-      avatar: `https://i.pravatar.cc/32?img=${m.id}`,
+      avatar: generateAvatarDataURI(m.fullName),
       online: false,
     })),
   )
