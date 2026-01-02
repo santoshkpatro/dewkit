@@ -178,7 +178,7 @@ onMounted(async () => {
             <Bell :size="18" />
           </button>
           <div class="profile">
-            <img :src="user.avatar" />
+            <img :src="generateAvatarDataURI(user.fullName)" />
             <span>{{ loggedInUser.fullName }}</span>
           </div>
         </div>
